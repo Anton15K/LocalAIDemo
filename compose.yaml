@@ -1,0 +1,130 @@
+services:
+  # ===========================================
+  # PostgreSQL with pgvector extension
+  # ===========================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: localai-postgres
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - localai-network
+
+  # ===========================================
+  # Ollama - Local LLM server
+  # ===========================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: localai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - localai-network
+    # Uncomment below for GPU support (NVIDIA)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ===========================================
+  # Model initialization (pull required models)
+  # ===========================================
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: localai-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Ollama to be ready..."
+        sleep 5
+        echo "Pulling mistral model..."
+        ollama pull mistral
+        echo "Pulling nomic-embed-text model..."
+        ollama pull nomic-embed-text
+        echo "Models pulled successfully!"
+    networks:
+      - localai-network
+
+  # ===========================================
+  # Spring Boot Application
+  # ===========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: localai-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: secret
+      # Ollama
+      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
+      SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: mistral
+      SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL: nomic-embed-text
+      # JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      # Flyway
+      SPRING_FLYWAY_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    networks:
+      - localai-network
+    restart: unless-stopped
+
+# ===========================================
+# Volumes for data persistence
+# ===========================================
+volumes:
+  postgres_data:
+    name: localai-postgres-data
+  ollama_data:
+    name: localai-ollama-data
+
+# ===========================================
+# Network
+# ===========================================
+networks:
+  localai-network:
+    name: localai-network
+    driver: bridge
