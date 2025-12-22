@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: html(pageTitle='New Lecture', currentPage='lectures', content=~{::content})}">
+<body>
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="/lectures" class="text-gray-500 hover:text-gray-700">Lectures</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li class="text-gray-900 font-medium">New</li>
+            </ol>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900">Create New Lecture</h1>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl">
+        <form action="/lectures/create" method="post" class="p-6 space-y-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Lecture Title *</label>
+                <input type="text" id="title" name="title" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3"
+                       placeholder="e.g., Introduction to Calculus - Lecture 1">
+            </div>
+
+            <div>
+                <label for="transcript" class="block text-sm font-medium text-gray-700">Lecture Transcript *</label>
+                <p class="mt-1 text-sm text-gray-500">Paste the full transcript or speech content from the lecture.</p>
+                <textarea id="transcript" name="transcript" rows="15" required
+                          class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3 font-mono text-sm"
+                          placeholder="Today we're going to discuss derivatives. The derivative of a function measures the rate of change..."></textarea>
+            </div>
+
+            <div>
+                <label for="uploadedBy" class="block text-sm font-medium text-gray-700">Uploaded By (optional)</label>
+                <input type="text" id="uploadedBy" name="uploadedBy"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3"
+                       placeholder="Your name">
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a href="/lectures" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">
+                    Cancel
+                </a>
+                <button type="submit" name="action" value="save"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition">
+                    Save as Draft
+                </button>
+                <button type="submit" name="action" value="analyze"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                    Save & Analyze
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

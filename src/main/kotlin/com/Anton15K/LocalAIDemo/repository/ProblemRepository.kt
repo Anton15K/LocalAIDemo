@@ -18,11 +18,21 @@ interface ProblemRepository : JpaRepository<Problem, UUID> {
     
     fun findByTopicIn(topics: List<String>, pageable: Pageable): Page<Problem>
     
+    fun findByDifficulty(difficulty: Int, pageable: Pageable): Page<Problem>
+    
+    fun findByTopicAndDifficulty(topic: String, difficulty: Int, pageable: Pageable): Page<Problem>
+    
     @Query("SELECT DISTINCT p.topic FROM Problem p ORDER BY p.topic")
     fun findAllTopics(): List<String>
     
+    @Query("SELECT DISTINCT p.topic FROM Problem p ORDER BY p.topic")
+    fun findDistinctTopics(): List<String>
+    
     @Query("SELECT p FROM Problem p WHERE LOWER(p.topic) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     fun findByTopicContaining(@Param("keyword") keyword: String, pageable: Pageable): Page<Problem>
+    
+    @Query("SELECT p FROM Problem p WHERE LOWER(p.topic) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    fun findByTopicContainingIgnoreCase(@Param("keyword") keyword: String, pageable: Pageable): Page<Problem>
     
     fun existsBySourceId(sourceId: String): Boolean
 }
