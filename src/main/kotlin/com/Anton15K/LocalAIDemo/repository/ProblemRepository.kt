@@ -35,4 +35,8 @@ interface ProblemRepository : JpaRepository<Problem, UUID> {
     fun findByTopicContainingIgnoreCase(@Param("keyword") keyword: String, pageable: Pageable): Page<Problem>
     
     fun existsBySourceId(sourceId: String): Boolean
+
+    fun findBySourceIdIn(sourceIds: List<String>): List<Problem>
+
+    fun countBySourceIdStartingWith(prefix: String): Long
 }

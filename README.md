@@ -104,12 +104,18 @@ Everything runs in Docker containers. No local Java installation required.
 
 ### 1. Start the full stack
 ```bash
+# (Optional) If the dataset is gated/rate-limited, provide a Hugging Face token.
+# Do NOT commit tokens to git.
+export HUGGINGFACE_TOKEN='YOUR_TOKEN_HERE'
+
 # Build and start all services (first run takes ~5-10 minutes)
 docker compose up --build
 
 # Or run in background
 docker compose up --build -d
 ```
+
+Note: On first startup, the app auto-loads the Hugging Face dataset `zwhe99/DeepMath-103K` into the `problems` table (about 103k rows). Embedding indexing is disabled by default because it can take a long time.
 
 This starts:
 - **postgres** - PostgreSQL 16 with pgvector extension

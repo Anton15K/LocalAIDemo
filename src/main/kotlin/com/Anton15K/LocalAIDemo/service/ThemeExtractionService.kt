@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 /**
@@ -27,7 +28,13 @@ data class ExtractedTheme(
 class ThemeExtractionService(
     private val chatClient: ChatClient.Builder,
     private val problemRepository: ProblemRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    @Value("\${app.theme-extraction.max-topics-in-prompt:120}")
+    private val maxTopicsInPrompt: Int,
+    @Value("\${app.theme-extraction.max-transcript-chars:12000}")
+    private val maxTranscriptChars: Int,
+    @Value("\${app.theme-extraction.max-themes:8}")
+    private val maxThemes: Int
 ) {
     private val logger = LoggerFactory.getLogger(ThemeExtractionService::class.java)
 
@@ -36,16 +43,33 @@ class ThemeExtractionService(
      */
     fun extractThemes(transcript: String): List<ExtractedTheme> {
         logger.info("Extracting themes from transcript of length: ${transcript.length}")
+
+        val trimmedTranscript = truncateTranscript(transcript, maxTranscriptChars)
         
         // Get available topics from the problem database for mapping
         val availableTopics = problemRepository.findAllTopics()
         val topicsContext = if (availableTopics.isNotEmpty()) {
-            "Available math topics in our database: ${availableTopics.joinToString(", ")}"
+            val effectiveMax = maxTopicsInPrompt.coerceAtLeast(0)
+            val subset = if (effectiveMax == 0) emptyList() else availableTopics.take(effectiveMax)
+            val omitted = (availableTopics.size - subset.size).coerceAtLeast(0)
+            buildString {
+                append("Available math topics in our database (showing ")
+                append(subset.size)
+                append(" of ")
+                append(availableTopics.size)
+                append("):\n")
+                append(subset.joinToString("\n") { "- $it" })
+                if (omitted > 0) {
+                    append("\n(")
+                    append(omitted)
+                    append(" more topics omitted from the prompt. If none of the listed topics match well, set mappedTopic to null.)")
+                }
+            }
         } else {
             "Common math topics: Algebra, Geometry, Number Theory, Combinatorics, Probability, Calculus, Linear Algebra, Trigonometry"
         }
 
-        val prompt = buildPrompt(transcript, topicsContext)
+        val prompt = buildPrompt(trimmedTranscript, topicsContext)
         
         val response = chatClient.build()
             .prompt()
@@ -63,6 +87,8 @@ class ThemeExtractionService(
             Analyze the following lecture transcript and extract the main mathematical themes/topics covered.
             
             $topicsContext
+
+            Return at most $maxThemes themes.
             
             For each theme you identify, provide:
             1. name: A concise name for the theme/topic
@@ -89,6 +115,24 @@ class ThemeExtractionService(
             
             Return ONLY the JSON array, no additional text.
         """.trimIndent()
+    }
+
+    private fun truncateTranscript(transcript: String, maxChars: Int): String {
+        val effectiveMax = maxChars.coerceAtLeast(500)
+        if (transcript.length <= effectiveMax) return transcript
+
+        // Keep beginning and end to preserve context; this reduces token load drastically.
+        val headSize = (effectiveMax * 0.65).toInt().coerceAtLeast(200)
+        val tailSize = (effectiveMax - headSize).coerceAtLeast(200)
+
+        val head = transcript.take(headSize)
+        val tail = transcript.takeLast(tailSize)
+
+        return buildString {
+            append(head.trimEnd())
+            append("\n\n[... transcript truncated for performance ...]\n\n")
+            append(tail.trimStart())
+        }
     }
 
     private fun parseThemeResponse(response: String): List<ExtractedTheme> {

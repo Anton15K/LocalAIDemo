@@ -97,6 +97,16 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       # Flyway
       SPRING_FLYWAY_ENABLED: "true"
+
+      # Hugging Face DeepMath ingestion (runs on startup)
+      APP_INGESTION_DEEPMATH_ENABLED: "true"
+      APP_INGESTION_DEEPMATH_INDEX_EMBEDDINGS: "true"
+      APP_INGESTION_DEEPMATH_BATCH_SIZE: "100"
+      APP_INGESTION_DEEPMATH_REQUEST_DELAY_MS: "250"
+      APP_INGESTION_DEEPMATH_INDEX_CHUNK_SIZE: "100"
+      APP_INGESTION_DEEPMATH_INDEX_DELAY_MS: "200"
+      # Provide your token via host env var HUGGINGFACE_TOKEN (optional for public datasets)
+      APP_HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

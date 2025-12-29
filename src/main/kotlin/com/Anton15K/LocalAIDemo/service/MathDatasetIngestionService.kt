@@ -73,15 +73,27 @@ class MathDatasetIngestionService(
      * Import multiple problems in batch.
      */
     @Transactional
-    fun importProblems(imports: List<MathProblemImport>): ImportResult {
+    fun importProblems(
+        imports: List<MathProblemImport>,
+        indexAfterSave: Boolean = true,
+        indexChunkSize: Int = 25,
+        indexDelayMs: Long = 0
+    ): ImportResult {
         var imported = 0
         var skipped = 0
         var failed = 0
         val problems = mutableListOf<Problem>()
 
+        val sourceIds = imports.map { it.sourceId }
+        val existingSourceIds = if (sourceIds.isEmpty()) {
+            emptySet()
+        } else {
+            problemRepository.findBySourceIdIn(sourceIds).mapTo(mutableSetOf()) { it.sourceId }
+        }
+
         for (import in imports) {
             try {
-                if (problemRepository.existsBySourceId(import.sourceId)) {
+                if (import.sourceId in existingSourceIds) {
                     skipped++
                     continue
                 }
@@ -109,10 +121,18 @@ class MathDatasetIngestionService(
             val saved = problemRepository.saveAll(problems)
             
             // Batch index for vector search (non-fatal)
-            try {
-                problemRetrievalService.indexProblems(saved)
-            } catch (e: Exception) {
-                logger.warn("Batch indexing failed for ${saved.size} problems: ${e.message}")
+            if (indexAfterSave) {
+                try {
+                    val effectiveChunkSize = indexChunkSize.coerceAtLeast(1)
+                    for (chunk in saved.chunked(effectiveChunkSize)) {
+                        problemRetrievalService.indexProblems(chunk)
+                        if (indexDelayMs > 0) {
+                            Thread.sleep(indexDelayMs)
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.warn("Batch indexing failed for ${saved.size} problems: ${e.message}")
+                }
             }
         }
 
