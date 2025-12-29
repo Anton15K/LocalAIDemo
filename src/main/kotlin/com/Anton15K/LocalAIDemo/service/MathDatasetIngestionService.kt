@@ -58,8 +58,12 @@ class MathDatasetIngestionService(
 
         val saved = problemRepository.save(problem)
         
-        // Index for vector search
-        problemRetrievalService.indexProblem(saved)
+        // Index for vector search (non-fatal)
+        try {
+            problemRetrievalService.indexProblem(saved)
+        } catch (e: Exception) {
+            logger.warn("Indexing failed for problem ${saved.sourceId}: ${e.message}")
+        }
         
         logger.debug("Imported problem: ${saved.sourceId}")
         return saved
@@ -104,8 +108,12 @@ class MathDatasetIngestionService(
         if (problems.isNotEmpty()) {
             val saved = problemRepository.saveAll(problems)
             
-            // Batch index for vector search
-            problemRetrievalService.indexProblems(saved)
+            // Batch index for vector search (non-fatal)
+            try {
+                problemRetrievalService.indexProblems(saved)
+            } catch (e: Exception) {
+                logger.warn("Batch indexing failed for ${saved.size} problems: ${e.message}")
+            }
         }
 
         logger.info("Import complete: $imported imported, $skipped skipped, $failed failed")

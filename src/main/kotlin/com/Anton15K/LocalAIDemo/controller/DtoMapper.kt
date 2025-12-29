@@ -51,7 +51,7 @@ class DtoMapper(private val objectMapper: ObjectMapper) {
             name = theme.name,
             confidence = theme.confidence,
             summary = theme.summary,
-            keywords = parseKeywords(theme.keywords),
+            keywords = emptyList(),
             mappedTopic = theme.mappedTopic
         )
     }

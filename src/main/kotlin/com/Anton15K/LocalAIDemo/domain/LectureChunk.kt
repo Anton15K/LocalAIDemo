@@ -30,9 +30,6 @@ data class LectureChunk(
     @Column(name = "token_end")
     val tokenEnd: Int? = null,
 
-    @Column(name = "theme_tags", columnDefinition = "JSONB")
-    val themeTags: String? = null,
-
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now()
 ) {

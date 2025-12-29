@@ -13,7 +13,6 @@ CREATE TABLE problems (
     topic VARCHAR(255) NOT NULL,
     subtopic VARCHAR(255),
     difficulty INTEGER,
-    metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -48,7 +47,6 @@ CREATE TABLE lecture_chunks (
     chunk_index INTEGER NOT NULL,
     token_start INTEGER,
     token_end INTEGER,
-    theme_tags JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
@@ -61,7 +59,6 @@ CREATE TABLE themes (
     name VARCHAR(255) NOT NULL,
     confidence DOUBLE PRECISION,
     summary TEXT,
-    keywords JSONB,
     mapped_topic VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

@@ -99,19 +99,66 @@ class WebController(
     fun lectureDetail(@PathVariable id: UUID, model: Model): String {
         val lecture = lectureRepository.findById(id)
             .orElseThrow { NoSuchElementException("Lecture not found with id: $id") }
-        
+
+        // If lecture is not analyzed yet, show processing view
+        val status = lecture.status?.toString()
+        if (status == "PENDING" || status == "PROCESSING") {
+            model.addAttribute("lecture", lecture)
+            return "lectures/processing"
+        }
+
+        // Completed or failed: show detail view (error message rendered if failed)
         val themes = themeRepository.findByLectureId(id)
-        
-        // Get recommended problems from themes
-        val recommendedProblems = themes.flatMap { theme ->
-            problemRepository.findByTopicContainingIgnoreCase(theme.name, PageRequest.of(0, 5)).content
-        }.distinctBy { it.id }.take(10)
-        
+
+        // Recommended problems via hybrid search
+        val problems = lectureProcessingService.getRecommendedProblems(
+            lectureId = id,
+            topK = 20,
+            pageable = PageRequest.of(0, 10)
+        )
+
         model.addAttribute("lecture", lecture)
         model.addAttribute("themes", themes)
-        model.addAttribute("recommendedProblems", recommendedProblems)
-        
+        model.addAttribute("problems", problems)
+
         return "lectures/detail"
+    }
+
+    @PostMapping("/lectures/{id}/process")
+    fun processLecture(
+        @PathVariable id: UUID,
+        redirectAttributes: RedirectAttributes
+    ): String {
+        return try {
+            // Process asynchronously
+            Thread {
+                try {
+                    lectureProcessingService.processLecture(id)
+                } catch (e: Exception) {
+                    // Error will be stored in the lecture status
+                }
+            }.start()
+            redirectAttributes.addFlashAttribute("message", "Analysis started!")
+            "redirect:/lectures/$id"
+        } catch (e: Exception) {
+            redirectAttributes.addFlashAttribute("error", "Failed to start analysis: ${e.message}")
+            "redirect:/lectures/$id"
+        }
+    }
+
+    @PostMapping("/lectures/{id}/delete")
+    fun deleteLecture(
+        @PathVariable id: UUID,
+        redirectAttributes: RedirectAttributes
+    ): String {
+        return try {
+            lectureProcessingService.deleteLecture(id)
+            redirectAttributes.addFlashAttribute("message", "Lecture deleted successfully!")
+            "redirect:/lectures"
+        } catch (e: Exception) {
+            redirectAttributes.addFlashAttribute("error", "Failed to delete lecture: ${e.message}")
+            "redirect:/lectures"
+        }
     }
 
     // ============ PROBLEMS ============

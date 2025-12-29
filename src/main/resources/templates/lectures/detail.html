@@ -16,7 +16,7 @@
             <div>
                 <h1 class="text-3xl font-bold text-gray-900" th:text="${lecture.title}">Lecture Title</h1>
                 <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                    <span th:text="${#temporals.format(lecture.createdAt, 'MMMM d, yyyy \'at\' HH:mm')}">Date</span>
+                    <span th:text="${#temporals.format(lecture.createdAt, 'MMMM d, yyyy ''at'' HH:mm')}">Date</span>
                     <span th:if="${lecture.uploadedBy}" th:text="'by ' + ${lecture.uploadedBy}">by User</span>
                 </div>
             </div>
@@ -71,11 +71,7 @@
                             <div class="flex-1">
                                 <h3 class="font-medium text-gray-900" th:text="${theme.name}">Theme Name</h3>
                                 <p th:if="${theme.summary}" class="mt-1 text-sm text-gray-600" th:text="${theme.summary}">Summary</p>
-                                <div th:if="${not #lists.isEmpty(theme.keywords)}" class="mt-2 flex flex-wrap gap-1">
-                                    <span th:each="keyword : ${theme.keywords}" 
-                                          th:text="${keyword}"
-                                          class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">keyword</span>
-                                </div>
+                                <!-- Keywords removed: Theme entity no longer includes keywords -->
                             </div>
                             <div class="ml-4 flex items-center space-x-2">
                                 <span th:if="${theme.mappedTopic}" 

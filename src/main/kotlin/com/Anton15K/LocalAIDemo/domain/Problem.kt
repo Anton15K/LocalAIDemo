@@ -32,9 +32,6 @@ data class Problem(
     @Column(name = "difficulty")
     val difficulty: Int? = null,
 
-    @Column(name = "metadata", columnDefinition = "JSONB")
-    val metadata: String? = null,
-
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),
 

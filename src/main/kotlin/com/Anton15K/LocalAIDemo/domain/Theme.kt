@@ -27,9 +27,6 @@ data class Theme(
     @Column(name = "summary", columnDefinition = "TEXT")
     val summary: String? = null,
 
-    @Column(name = "keywords", columnDefinition = "JSONB")
-    val keywords: String? = null,
-
     @Column(name = "mapped_topic")
     val mappedTopic: String? = null,
 

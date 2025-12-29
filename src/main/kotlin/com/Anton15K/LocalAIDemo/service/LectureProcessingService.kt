@@ -146,7 +146,7 @@ class LectureProcessingService(
                 name = theme.name,
                 confidence = theme.confidence ?: 0.5,
                 summary = theme.summary ?: "",
-                keywords = parseKeywords(theme.keywords),
+                keywords = emptyList(),
                 mappedTopic = theme.mappedTopic
             )
         }

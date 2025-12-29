@@ -117,7 +117,6 @@ class ThemeExtractionService(
                 name = extracted.name,
                 confidence = extracted.confidence,
                 summary = extracted.summary,
-                keywords = objectMapper.writeValueAsString(extracted.keywords),
                 mappedTopic = extracted.mappedTopic
             )
         }
