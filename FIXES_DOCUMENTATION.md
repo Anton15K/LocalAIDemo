@@ -101,6 +101,48 @@ Important disambiguation rule for vectors and matrices:
 
 ---
 
+### 4. Enhanced Error Handling and Diagnostics (commit e4d8db3)
+
+**Issue**: When theme extraction failed, errors were silently swallowed, making it difficult to diagnose issues. Users would see "no topics found" without understanding why.
+
+**Root Cause**: 
+- LLM connection failures returned empty lists without throwing exceptions
+- JSON parsing errors were caught and returned empty lists
+- No detailed logging of the extraction process
+
+**Fixes Applied**:
+
+#### a) Explicit Error Handling (`ThemeExtractionService.kt`)
+Now throws descriptive RuntimeExceptions instead of returning empty lists:
+- **Connection errors**: "Theme extraction failed: Unable to connect to LLM service. Please check that Ollama is running..."
+- **Empty responses**: "Theme extraction failed: LLM returned empty response. Please check Ollama service..."
+- **Parsing errors**: "Theme extraction failed: Unable to parse LLM response as JSON. The model may not be following the expected format..."
+
+#### b) Enhanced Logging
+Added DEBUG-level logging at key points:
+- Prompt generation with character count
+- LLM response receipt with length
+- JSON parsing attempts with preview of content
+- Success messages with theme count
+
+#### c) Comprehensive Troubleshooting Guide (`TROUBLESHOOTING.md`)
+Created detailed guide covering:
+- Common issues (Ollama not running, model not available, format issues, etc.)
+- Diagnostic steps with specific commands
+- Model-specific recommendations
+- Quick fix checklist
+- Performance tips
+
+**Location**: `src/main/kotlin/com/Anton15K/LocalAIDemo/service/ThemeExtractionService.kt`, lines 44-93, 143-157
+
+**Impact**: 
+- Users now see specific error messages on the lecture detail page
+- Developers can diagnose issues quickly using logs
+- Clear path to resolution for common problems
+- Error messages are stored in the lecture's `errorMessage` field and displayed in the UI
+
+---
+
 ## Configuration Recommendations
 
 ### Temperature Setting
@@ -241,11 +283,45 @@ Implement feedback collection:
 
 ## Summary
 
-The implemented fixes address both reported issues:
+The implemented fixes address all reported issues:
 
 ✅ **Scores no longer exceed 100%** - Clamping ensures valid percentage display  
 ✅ **Geometry lectures map correctly** - Enhanced prompts and scoring prevent drift to Linear Algebra  
+✅ **Theme extraction errors are now visible** - Detailed error messages help diagnose issues  
 ✅ **Configuration guidance added** - Users can tune temperature for better results  
 ✅ **Expanded geometric vocabulary** - Better detection of geometric contexts  
+✅ **Comprehensive troubleshooting guide** - `TROUBLESHOOTING.md` provides step-by-step diagnostics
 
 These changes are minimal, surgical modifications that improve the system without requiring fine-tuning or significant architectural changes.
+
+---
+
+## Troubleshooting "No Topics Found"
+
+If you're experiencing issues where lectures don't extract any themes, please refer to the comprehensive `TROUBLESHOOTING.md` guide which covers:
+
+1. **Quick diagnostics**: Check if Ollama is running and the model is available
+2. **Common issues**: Connection problems, model availability, response format issues
+3. **Step-by-step fixes**: Detailed solutions for each issue type
+4. **Model recommendations**: Which models work best for math topic extraction
+5. **Configuration tips**: Optimal settings for your use case
+
+**Quick check**:
+```bash
+# Is Ollama running?
+curl http://localhost:11434/api/tags
+
+# Is your model available?
+ollama list | grep mistral  # or your configured model
+
+# Check application logs for specific error messages
+docker compose logs app | grep -i "theme"
+```
+
+**Most common fixes**:
+1. Start Ollama: `ollama serve`
+2. Pull a reliable model: `ollama pull mistral`
+3. Update application.properties: `spring.ai.ollama.chat.options.model=mistral`
+4. Restart the application
+
+For detailed diagnostic procedures and model-specific guidance, see `TROUBLESHOOTING.md`.
