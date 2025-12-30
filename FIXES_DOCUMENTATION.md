@@ -31,13 +31,13 @@ score = clampScore(existingResult.score + (semanticScore * 0.5))  // Now clamped
 
 **Fixes Applied**:
 
-#### a) Enhanced LLM Prompt (`ThemeExtractionService.kt`)
-- Replaced brief disambiguation note with comprehensive "CRITICAL DISAMBIGUATION RULES" section
-- Added explicit checkboxes for GEOMETRY criteria (vectors as arrows, geometric properties, coordinate geometry, etc.)
-- Added explicit checkboxes for LINEAR ALGEBRA criteria (abstract vector spaces, eigenvalues, theoretical concepts)
-- Provided clear default behavior: "Default to GEOMETRY if the word 'vector' appears with geometric terms"
+#### a) Enhanced and Simplified LLM Prompt (`ThemeExtractionService.kt`)
+- **Initial Fix (commit 859ecd9)**: Added comprehensive "CRITICAL DISAMBIGUATION RULES" with detailed criteria
+- **Simplified Fix (commit 08b7af5)**: Condensed the rules into concise bullet points after discovering that complex structured prompts with special characters (✓) were causing LLM parsing failures
+- Current prompt provides clear disambiguation rules: prefer GEOMETRY for vectors as arrows/spatial relationships, choose LINEAR ALGEBRA only for abstract vector spaces/eigenvalues
+- Maintains "when in doubt with vectors, prefer GEOMETRY" default behavior
 
-**Location**: `src/main/kotlin/com/Anton15K/LocalAIDemo/service/ThemeExtractionService.kt`, lines 89-118
+**Location**: `src/main/kotlin/com/Anton15K/LocalAIDemo/service/ThemeExtractionService.kt`, lines 85-95
 
 #### b) Strengthened Geometric Scoring (`TopicMappingService.kt`)
 - Increased geometry boost from +6 to +10 when geometric hints are present and topic contains "geometry"
@@ -53,6 +53,45 @@ Added 15 more geometric keywords to `GEOMETRY_HINTS`:
 - Geometric objects: tangent, secant, arc, sector, geometric, shape, shapes
 
 **Location**: `src/main/kotlin/com/Anton15K/LocalAIDemo/service/TopicMappingService.kt`, lines 165-167
+
+---
+
+### 3. Theme Extraction Failures ("No Changes" When Inserting Lectures)
+
+**Issue**: When users inserted lectures, no themes were being extracted, resulting in "no changes" and no problem recommendations.
+
+**Root Cause**: The enhanced disambiguation prompt (commit 859ecd9) contained:
+- Special Unicode characters (✓ checkmarks) that confused some LLM models
+- Complex nested structure with numbered sections and sub-bullets
+- Longer prompt length that could exceed context limits for some models
+
+When the LLM failed to generate valid JSON (due to prompt confusion), the `parseThemeResponse()` method would catch the exception and return an empty list, causing no themes to be extracted.
+
+**Fix (commit 08b7af5)**: Simplified the LLM prompt while maintaining disambiguation logic:
+- Removed special Unicode characters
+- Condensed multi-level structure into simple bullet points
+- Reduced prompt length by ~70% while keeping key disambiguation rules
+- Maintained "prefer GEOMETRY over LINEAR ALGEBRA when in doubt" default behavior
+
+**Code reference**:
+```kotlin
+// Before: Complex structured prompt with special characters
+CRITICAL DISAMBIGUATION RULES:
+1. GEOMETRY vs LINEAR ALGEBRA disambiguation:
+   When you encounter vectors/matrices, carefully assess the context:
+   ✓ Choose GEOMETRY when...
+   [30+ lines of detailed criteria]
+
+// After: Concise and clear
+Important disambiguation rule for vectors and matrices:
+- Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments...
+- Choose LINEAR ALGEBRA only if the lecture discusses abstract vector spaces...
+- When in doubt with vectors, prefer GEOMETRY over LINEAR ALGEBRA.
+```
+
+**Location**: `src/main/kotlin/com/Anton15K/LocalAIDemo/service/ThemeExtractionService.kt`, lines 88-92
+
+**Impact**: Lectures now successfully extract themes, leading to proper problem recommendations.
 
 ---
 
