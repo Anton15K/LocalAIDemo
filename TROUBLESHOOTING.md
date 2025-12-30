@@ -52,13 +52,24 @@ spring.ai.ollama.chat.options.model=mistral
 
 **Symptom**: Error message like "Unable to parse LLM response as JSON" or log showing unexpected JSON structure
 
-**Common Sub-Issue**: LLM extracting wrong data (e.g., extracting points/coordinates instead of topics)
+**Common Sub-Issues**: 
 
-**Example of Wrong Output**:
+a) **LLM extracting wrong data** (e.g., extracting points/coordinates instead of topics)
+
+**Example of Wrong Output #1**:
 ```json
 [
   {"point": "P", "position_vector": "1/3 * (OA + OB + OC)"},
   {"point": "Q", "position_vector": "1/3 * (OA + OB + OC)"}
+]
+```
+
+b) **LLM using wrong field names** (e.g., using "task" and "description" instead of "name", "confidence", "summary")
+
+**Example of Wrong Output #2**:
+```json
+[
+  {"task": "Vector Algebra", "description": "Find the position vector of P..."}
 ]
 ```
 
@@ -69,7 +80,9 @@ spring.ai.ollama.chat.options.model=mistral
 ]
 ```
 
-**Root Cause**: The LLM is misunderstanding the prompt and extracting specific values/calculations instead of identifying mathematical topics.
+**Root Cause**: The LLM is misunderstanding the prompt and either:
+- Extracting specific values/calculations instead of identifying mathematical topics
+- Generating the wrong JSON field names
 
 **Solution**:
 
