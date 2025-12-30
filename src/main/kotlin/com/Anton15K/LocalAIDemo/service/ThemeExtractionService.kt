@@ -86,37 +86,10 @@ class ThemeExtractionService(
             
             Analyze the following lecture transcript and extract the main mathematical themes/topics covered.
 
-            CRITICAL DISAMBIGUATION RULES:
-            
-            1. GEOMETRY vs LINEAR ALGEBRA disambiguation:
-               When you encounter vectors/matrices, carefully assess the context:
-               
-               ✓ Choose GEOMETRY when the lecture discusses:
-               - Vectors as arrows or directed segments in 2D/3D space
-               - Geometric properties: distances, angles, projections, perpendicularity
-               - Coordinate geometry, points, lines, planes
-               - Dot product for angles, cross product for areas/normals
-               - Geometric transformations (rotations, reflections, translations)
-               - Visual/spatial reasoning about shapes and positions
-               
-               ✓ Choose LINEAR ALGEBRA when the lecture discusses:
-               - Abstract vector spaces and their properties
-               - Linear transformations as functions between vector spaces
-               - Matrices as linear operators (not just coordinate representations)
-               - Eigenvalues, eigenvectors, determinants, rank
-               - Basis, span, linear independence, subspaces
-               - Systems of linear equations (matrix form)
-               - Theoretical properties of linear systems
-            
-            2. Default to GEOMETRY if:
-               - The word "vector" appears with geometric terms (angle, distance, perpendicular, triangle, etc.)
-               - The context is about physical/spatial relationships
-               - There's mention of coordinate systems (Cartesian, polar)
-            
-            3. Only choose LINEAR ALGEBRA if there's clear evidence of:
-               - Abstract algebraic structure discussion
-               - Matrix operations beyond coordinate transformations
-               - Theoretical concepts like kernel, image, or dimension
+            Important disambiguation rule for vectors and matrices:
+            - Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments in 2D/3D space, geometric properties (distances, angles, projections), coordinate geometry, or spatial relationships.
+            - Choose LINEAR ALGEBRA only if the lecture discusses abstract vector spaces, linear transformations as functions, eigenvalues/eigenvectors, basis/span, or theoretical algebraic properties.
+            - When in doubt with vectors, prefer GEOMETRY over LINEAR ALGEBRA.
             
             $topicsContext
 
