@@ -99,11 +99,18 @@ class ThemeExtractionService(
 
     private fun buildPrompt(transcript: String, topicsContext: String): String {
         return """
-            TASK: Identify the mathematical TOPICS/THEMES covered in a lecture transcript.
+            You are analyzing a mathematics lecture transcript to identify which mathematical TOPICS are being taught.
             
-            You are analyzing educational content to determine what mathematical subjects are being taught.
-            DO NOT extract specific points, values, or calculations from the transcript.
-            DO identify the broad mathematical topics/themes being discussed.
+            Your goal: Identify the main mathematical subjects/topics covered in the lecture.
+            
+            DO NOT:
+            - Extract specific problems, exercises, or calculations from the transcript
+            - Extract specific points, coordinates, or numerical values
+            - List individual tasks or questions from the transcript
+            
+            DO:
+            - Identify the broad mathematical topics being taught (e.g., "Vectors", "Calculus", "Algebra")
+            - Determine the mathematical subjects and concepts being explained
 
             Important disambiguation rule for vectors and matrices:
             - Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments in 2D/3D space, geometric properties (distances, angles, projections), coordinate geometry, or spatial relationships.
@@ -112,18 +119,16 @@ class ThemeExtractionService(
             
             $topicsContext
 
-            Extract at most $maxThemes mathematical topics/themes from the transcript below.
+            Identify at most $maxThemes mathematical topics from the transcript below.
             
-            REQUIRED JSON FORMAT - Each object MUST have these exact fields:
-            {
-              "name": "string - topic name like 'Vectors', 'Quadratic Equations', 'Calculus'",
-              "confidence": number - between 0.0 and 1.0,
-              "summary": "string - brief description of how this topic appears",
-              "keywords": ["array", "of", "strings"],
-              "mappedTopic": "string or null - closest match from available topics"
-            }
+            You MUST return a JSON array where each object has EXACTLY these 5 fields:
+            - name: the topic name (string)
+            - confidence: your confidence score (number between 0.0 and 1.0)
+            - summary: brief description (string)
+            - keywords: list of related terms (array of strings)
+            - mappedTopic: closest match from available topics, or null (string or null)
             
-            Example response:
+            Example of correct format:
             [
               {
                 "name": "Quadratic Equations",
@@ -139,7 +144,7 @@ class ThemeExtractionService(
             $transcript
             ---
             
-            Return ONLY a valid JSON array with the format shown above. NO other text.
+            Return ONLY the JSON array. No other text before or after.
         """.trimIndent()
     }
 
