@@ -70,14 +70,31 @@ class ThemeExtractionService(
         }
 
         val prompt = buildPrompt(trimmedTranscript, topicsContext)
+        logger.debug("Generated prompt for theme extraction (length: ${prompt.length} chars)")
         
-        val response = chatClient.build()
-            .prompt()
-            .user(prompt)
-            .call()
-            .content()
+        val response = try {
+            chatClient.build()
+                .prompt()
+                .user(prompt)
+                .call()
+                .content()
+        } catch (e: Exception) {
+            logger.error("Failed to call LLM for theme extraction: ${e.message}", e)
+            throw RuntimeException("Theme extraction failed: Unable to connect to LLM service. Please check that Ollama is running and the model '${getModelName()}' is available.", e)
+        }
 
-        return parseThemeResponse(response ?: "[]")
+        if (response.isNullOrBlank()) {
+            logger.warn("LLM returned empty response for theme extraction")
+            throw RuntimeException("Theme extraction failed: LLM returned empty response. Please check Ollama service and model availability.")
+        }
+        
+        logger.debug("LLM response received (length: ${response.length} chars)")
+        return parseThemeResponse(response)
+    }
+    
+    private fun getModelName(): String {
+        // This would ideally come from configuration, but we'll use a placeholder for now
+        return "configured chat model"
     }
 
     private fun buildPrompt(transcript: String, topicsContext: String): String {
@@ -148,11 +165,19 @@ class ThemeExtractionService(
                 .replace("```", "")
                 .trim()
             
-            objectMapper.readValue<List<ExtractedTheme>>(jsonContent)
+            if (jsonContent.isEmpty() || jsonContent == "[]") {
+                logger.warn("LLM returned empty JSON array - no themes extracted")
+                return emptyList()
+            }
+            
+            logger.debug("Attempting to parse JSON response: ${jsonContent.take(200)}...")
+            val themes = objectMapper.readValue<List<ExtractedTheme>>(jsonContent)
+            logger.info("Successfully parsed ${themes.size} themes from LLM response")
+            themes
         } catch (e: Exception) {
-            logger.error("Failed to parse theme extraction response: ${e.message}")
-            logger.debug("Raw response: $response")
-            emptyList()
+            logger.error("Failed to parse theme extraction response: ${e.message}", e)
+            logger.error("Raw response (first 500 chars): ${response.take(500)}")
+            throw RuntimeException("Theme extraction failed: Unable to parse LLM response as JSON. The model may not be following the expected format. Raw error: ${e.message}", e)
         }
     }
 
