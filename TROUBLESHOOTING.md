@@ -50,13 +50,30 @@ spring.ai.ollama.chat.options.model=mistral
 
 ### 3. LLM Response Format Issues
 
-**Symptom**: Error message like "Unable to parse LLM response as JSON"
+**Symptom**: Error message like "Unable to parse LLM response as JSON" or log showing unexpected JSON structure
 
-**Root Cause**: The LLM is not returning valid JSON in the expected format.
+**Common Sub-Issue**: LLM extracting wrong data (e.g., extracting points/coordinates instead of topics)
+
+**Example of Wrong Output**:
+```json
+[
+  {"point": "P", "position_vector": "1/3 * (OA + OB + OC)"},
+  {"point": "Q", "position_vector": "1/3 * (OA + OB + OC)"}
+]
+```
+
+**Expected Output**:
+```json
+[
+  {"name": "Vectors", "confidence": 0.9, "summary": "...", "keywords": [...], "mappedTopic": "Geometry"}
+]
+```
+
+**Root Cause**: The LLM is misunderstanding the prompt and extracting specific values/calculations instead of identifying mathematical topics.
 
 **Solution**:
 
-a) **Try a different model**: Some models are better at following JSON format instructions
+a) **Try a different model**: Some models are better at following instructions and JSON format
 ```bash
 # Try mistral (very reliable for JSON)
 ollama pull mistral
