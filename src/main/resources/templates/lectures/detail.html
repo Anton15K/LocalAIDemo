@@ -141,7 +141,7 @@
                 <div th:if="${problems.totalElements > 10}" class="px-6 py-3 bg-gray-50 border-t">
                     <a th:href="@{/lectures/{id}/problems(id=${lecture.id})}" 
                        class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                        View all [[${problems.totalElements}]] problems →
+                        <span th:text="'View all ' + ${problems.totalElements} + ' problems →'">View all problems →</span>
                     </a>
                 </div>
             </div>

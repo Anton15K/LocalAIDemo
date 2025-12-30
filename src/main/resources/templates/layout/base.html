@@ -22,6 +22,20 @@
         .status-completed { background-color: #d1fae5; color: #065f46; }
         .status-failed { background-color: #fee2e2; color: #991b1b; }
     </style>
+
+    <!-- MathJax for LaTeX rendering -->
+    <script th:inline="none">
+        window.MathJax = {
+            tex: {
+                inlineMath: [ ['\\(', '\\)'], ['$', '$'] ],
+                displayMath: [ ['\\[', '\\]'], ['$$', '$$'] ]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
@@ -48,6 +62,10 @@
                     <a href="/problems" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
                        th:classappend="${currentPage == 'problems'} ? 'bg-white/20' : ''">
                         Problems
+                    </a>
+                    <a href="/admin" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
+                       th:classappend="${currentPage == 'admin'} ? 'bg-white/20' : ''">
+                        Admin
                     </a>
                 </div>
             </div>

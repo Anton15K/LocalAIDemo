@@ -53,7 +53,7 @@
         <div class="p-6" x-data="{ showSolution: false }">
             <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-gray-900">Solution</h2>
-                <button @click="showSolution = !showSolution" 
+                <button @click="showSolution = !showSolution; if (showSolution) { $nextTick(() => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(); }); }" 
                         class="px-4 py-2 text-sm font-medium rounded-md transition"
                         :class="showSolution ? 'bg-gray-200 text-gray-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
                     <span x-show="!showSolution">Show Solution</span>

@@ -58,6 +58,8 @@ class ProblemRetrievalService(
     ): Page<ProblemSearchResult> {
         if (themes.isEmpty()) return Page.empty(pageable)
 
+        val allowedTopics = themes.mapNotNull { it.mappedTopic }.toSet()
+
         val allResults = mutableListOf<ProblemSearchResult>()
         val seenProblemIds = mutableSetOf<UUID>()
 
@@ -75,13 +77,22 @@ class ProblemRetrievalService(
                 seenProblemIds.add(problemId)
 
                 val problem = problemRepository.findById(problemId).orElse(null) ?: continue
+
+                if (allowedTopics.isNotEmpty()) {
+                    val requiredTopic = theme.mappedTopic
+                    if (requiredTopic != null) {
+                        if (problem.topic != requiredTopic) continue
+                    } else {
+                        if (problem.topic !in allowedTopics) continue
+                    }
+                }
                 
                 // Use document metadata score if available, or default
                 val score = doc.metadata["score"] as? Double ?: 0.5
                 
                 allResults.add(ProblemSearchResult(
                     problem = problem,
-                    score = score * theme.confidence, // Weight by theme confidence
+                    score = clampScore(score * theme.confidence), // Weight by theme confidence
                     matchedTheme = theme.name
                 ))
             }
@@ -112,6 +123,8 @@ class ProblemRetrievalService(
     ): Page<ProblemSearchResult> {
         val results = mutableMapOf<UUID, ProblemSearchResult>()
 
+        val allowedTopics = themes.mapNotNull { it.mappedTopic }.toSet()
+
         // 1. Topic-based retrieval (exact match on mapped topics)
         val mappedTopics = themes.mapNotNull { it.mappedTopic }.distinct()
         if (mappedTopics.isNotEmpty()) {
@@ -121,7 +134,7 @@ class ProblemRetrievalService(
                     val matchedTheme = themes.find { it.mappedTopic == problem.topic }?.name
                     results[id] = ProblemSearchResult(
                         problem = problem,
-                        score = 0.8, // Base score for exact topic match
+                        score = clampScore(0.8), // Base score for exact topic match
                         matchedTheme = matchedTheme
                     )
                 }
@@ -136,6 +149,15 @@ class ProblemRetrievalService(
             for (doc in documents) {
                 val problemId = extractProblemId(doc.id) ?: continue
                 val problem = problemRepository.findById(problemId).orElse(null) ?: continue
+
+                if (allowedTopics.isNotEmpty()) {
+                    val requiredTopic = theme.mappedTopic
+                    if (requiredTopic != null) {
+                        if (problem.topic != requiredTopic) continue
+                    } else {
+                        if (problem.topic !in allowedTopics) continue
+                    }
+                }
                 
                 val semanticScore = doc.metadata["score"] as? Double ?: 0.5
                 val existingResult = results[problemId]
@@ -149,7 +171,7 @@ class ProblemRetrievalService(
                     problem.id?.let { id ->
                         results[id] = ProblemSearchResult(
                             problem = problem,
-                            score = semanticScore * theme.confidence,
+                            score = clampScore(semanticScore * theme.confidence),
                             matchedTheme = theme.name
                         )
                     }
@@ -182,8 +204,10 @@ class ProblemRetrievalService(
             "difficulty" to (problem.difficulty ?: 0),
             "type" to "problem"
         )
-        
-        embeddingService.storeDocument("$PROBLEM_ID_PREFIX$id", content, metadata)
+
+        // IMPORTANT: Spring AI PgVectorStore defaults to UUID ids.
+        // Do not prefix, otherwise it will fail to parse as UUID.
+        embeddingService.storeDocument(id.toString(), content, metadata)
         logger.debug("Indexed problem: $id")
     }
 
@@ -195,7 +219,8 @@ class ProblemRetrievalService(
             val id = problem.id ?: return@mapNotNull null
             val content = buildProblemContent(problem)
             Document(
-                "$PROBLEM_ID_PREFIX$id",
+                // Keep ID as UUID string for PgVectorStore compatibility.
+                id.toString(),
                 content,
                 mapOf(
                     "sourceId" to problem.sourceId,
@@ -214,11 +239,19 @@ class ProblemRetrievalService(
 
     private fun buildSearchQuery(theme: ExtractedTheme): String {
         val parts = mutableListOf<String>()
+
+        // When available, anchor the semantic query to the mapped topic so
+        // generic terms like "vector" don't drift across domains.
+        val mappedTopic = theme.mappedTopic
+        if (!mappedTopic.isNullOrBlank()) {
+            parts.add("Topic: $mappedTopic")
+        }
+
         parts.add(theme.name)
         if (theme.keywords.isNotEmpty()) {
             parts.add(theme.keywords.joinToString(" "))
         }
-        theme.summary?.let { parts.add(it) }
+        theme.summary.takeIf { it.isNotBlank() }?.let { parts.add(it) }
         return parts.joinToString(". ")
     }
 
@@ -231,11 +264,23 @@ class ProblemRetrievalService(
     }
 
     private fun extractProblemId(documentId: String?): UUID? {
-        if (documentId == null || !documentId.startsWith(PROBLEM_ID_PREFIX)) return null
+        if (documentId.isNullOrBlank()) return null
+        val raw = if (documentId.startsWith(PROBLEM_ID_PREFIX)) {
+            documentId.removePrefix(PROBLEM_ID_PREFIX)
+        } else {
+            documentId
+        }
+
         return try {
-            UUID.fromString(documentId.removePrefix(PROBLEM_ID_PREFIX))
-        } catch (e: IllegalArgumentException) {
+            UUID.fromString(raw)
+        } catch (_: IllegalArgumentException) {
             null
         }
+    }
+
+    private fun clampScore(score: Double): Double {
+        // This score is a ranking signal, not a calibrated probability.
+        // Clamp to avoid UI showing >100% when we combine signals.
+        return score.coerceIn(0.0, 1.0)
     }
 }

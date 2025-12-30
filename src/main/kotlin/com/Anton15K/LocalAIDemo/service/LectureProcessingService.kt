@@ -22,6 +22,7 @@ class LectureProcessingService(
     private val themeRepository: ThemeRepository,
     private val textChunkingService: TextChunkingService,
     private val themeExtractionService: ThemeExtractionService,
+    private val topicMappingService: TopicMappingService,
     private val problemRetrievalService: ProblemRetrievalService
 ) {
     private val logger = LoggerFactory.getLogger(LectureProcessingService::class.java)
@@ -81,7 +82,9 @@ class LectureProcessingService(
             lectureChunkRepository.saveAll(chunkEntities)
 
             // 2. Extract themes from the full transcript
-            val extractedThemes = themeExtractionService.extractThemes(lecture.transcript!!)
+            val extractedThemes = topicMappingService.mapThemesToExistingTopics(
+                themeExtractionService.extractThemes(lecture.transcript!!)
+            )
             logger.info("Extracted ${extractedThemes.size} themes from lecture")
 
             // Save themes

@@ -104,6 +104,17 @@ Everything runs in Docker containers. No local Java installation required.
 
 ### 1. Start the full stack
 ```bash
+# macOS performance tip:
+# Run Ollama natively on your Mac (uses Metal acceleration) and let Docker connect to it.
+# This is usually much faster than running Ollama inside Docker on macOS.
+
+# Start Ollama on the host (outside Docker)
+ollama serve
+
+# Ensure required models exist on the host
+ollama pull mistral
+ollama pull nomic-embed-text
+
 # (Optional) If the dataset is gated/rate-limited, provide a Hugging Face token.
 # Do NOT commit tokens to git.
 export HUGGINGFACE_TOKEN='YOUR_TOKEN_HERE'
@@ -113,6 +124,12 @@ docker compose up --build
 
 # Or run in background
 docker compose up --build -d
+```
+
+If you prefer running Ollama inside Docker instead (usually slower on macOS), run:
+```bash
+export OLLAMA_BASE_URL='http://ollama:11434'
+docker compose --profile docker-ollama up --build
 ```
 
 Note: On first startup, the app auto-loads the Hugging Face dataset `zwhe99/DeepMath-103K` into the `problems` table (about 103k rows). Embedding indexing is disabled by default because it can take a long time.

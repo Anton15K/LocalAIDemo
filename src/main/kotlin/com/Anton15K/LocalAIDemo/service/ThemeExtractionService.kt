@@ -85,6 +85,12 @@ class ThemeExtractionService(
             You are an expert at analyzing educational content and identifying mathematical topics.
             
             Analyze the following lecture transcript and extract the main mathematical themes/topics covered.
+
+                        Important disambiguation rule:
+                        - If the transcript mentions vectors/matrices, decide whether the context is primarily:
+                            - Geometry / analytic geometry (vectors in 2D/3D space, dot/cross product, projections, distances, angles, coordinate geometry), OR
+                            - Linear algebra (vector spaces, bases, linear transformations, matrices as operators, eigenvalues, determinants, rank).
+                        Prefer mapping to Geometry when the context includes geometric objects (lines/planes/angles/distances/coordinates) even if the word "vector" appears.
             
             $topicsContext
 
@@ -95,7 +101,7 @@ class ThemeExtractionService(
             2. confidence: A score from 0.0 to 1.0 indicating how confident you are this topic is covered
             3. summary: A brief description of how this topic appears in the lecture
             4. keywords: Key terms related to this topic mentioned in the lecture
-            5. mappedTopic: The closest matching topic from the available topics list (if applicable)
+            5. mappedTopic: The closest matching topic from the available topics list (if applicable). If none match clearly, set mappedTopic to null.
             
             Return your response as a JSON array of objects. Example format:
             [
