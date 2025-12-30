@@ -99,9 +99,11 @@ class ThemeExtractionService(
 
     private fun buildPrompt(transcript: String, topicsContext: String): String {
         return """
-            You are an expert at analyzing educational content and identifying mathematical topics.
+            TASK: Identify the mathematical TOPICS/THEMES covered in a lecture transcript.
             
-            Analyze the following lecture transcript and extract the main mathematical themes/topics covered.
+            You are analyzing educational content to determine what mathematical subjects are being taught.
+            DO NOT extract specific points, values, or calculations from the transcript.
+            DO identify the broad mathematical topics/themes being discussed.
 
             Important disambiguation rule for vectors and matrices:
             - Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments in 2D/3D space, geometric properties (distances, angles, projections), coordinate geometry, or spatial relationships.
@@ -110,16 +112,18 @@ class ThemeExtractionService(
             
             $topicsContext
 
-            Return at most $maxThemes themes.
+            Extract at most $maxThemes mathematical topics/themes from the transcript below.
             
-            For each theme you identify, provide:
-            1. name: A concise name for the theme/topic
-            2. confidence: A score from 0.0 to 1.0 indicating how confident you are this topic is covered
-            3. summary: A brief description of how this topic appears in the lecture
-            4. keywords: Key terms related to this topic mentioned in the lecture
-            5. mappedTopic: The closest matching topic from the available topics list (if applicable). If none match clearly, set mappedTopic to null.
+            REQUIRED JSON FORMAT - Each object MUST have these exact fields:
+            {
+              "name": "string - topic name like 'Vectors', 'Quadratic Equations', 'Calculus'",
+              "confidence": number - between 0.0 and 1.0,
+              "summary": "string - brief description of how this topic appears",
+              "keywords": ["array", "of", "strings"],
+              "mappedTopic": "string or null - closest match from available topics"
+            }
             
-            Return your response as a JSON array of objects. Example format:
+            Example response:
             [
               {
                 "name": "Quadratic Equations",
@@ -135,7 +139,7 @@ class ThemeExtractionService(
             $transcript
             ---
             
-            Return ONLY the JSON array, no additional text.
+            Return ONLY a valid JSON array with the format shown above. NO other text.
         """.trimIndent()
     }
 
@@ -176,8 +180,15 @@ class ThemeExtractionService(
             themes
         } catch (e: Exception) {
             logger.error("Failed to parse theme extraction response: ${e.message}", e)
-            logger.error("Raw response (first 500 chars): ${response.take(500)}")
-            throw RuntimeException("Theme extraction failed: Unable to parse LLM response as JSON. The model may not be following the expected format. Raw error: ${e.message}", e)
+            logger.error("Raw response (first 1000 chars): ${response.take(1000)}")
+            val errorMsg = buildString {
+                append("Theme extraction failed: The LLM returned an invalid response format. ")
+                append("Expected JSON with fields: name, confidence, summary, keywords, mappedTopic. ")
+                append("Instead received: ${response.take(200)}... ")
+                append("This usually means the model is not following the prompt instructions correctly. ")
+                append("Try a different model (e.g., mistral, llama3) or lower the temperature to 0.3.")
+            }
+            throw RuntimeException(errorMsg, e)
         }
     }
 
