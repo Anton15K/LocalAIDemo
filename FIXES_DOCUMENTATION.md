@@ -73,19 +73,25 @@ When the LLM failed to generate valid JSON (due to prompt confusion), the `parse
 - Reduced prompt length by ~70% while keeping key disambiguation rules
 - Maintained "prefer GEOMETRY over LINEAR ALGEBRA when in doubt" default behavior
 
-**Code reference**:
-```kotlin
-// Before: Complex structured prompt with special characters
+**Before** (commit 859ecd9): Complex structured prompt
+```
 CRITICAL DISAMBIGUATION RULES:
 1. GEOMETRY vs LINEAR ALGEBRA disambiguation:
    When you encounter vectors/matrices, carefully assess the context:
-   ✓ Choose GEOMETRY when...
-   [30+ lines of detailed criteria]
+   ✓ Choose GEOMETRY when the lecture discusses:
+   - Vectors as arrows or directed segments in 2D/3D space
+   - Geometric properties: distances, angles, projections, perpendicularity
+   - Coordinate geometry, points, lines, planes
+   [... 25 more lines of detailed criteria ...]
+```
 
-// After: Concise and clear
+**After** (commit 08b7af5): Concise and clear
+```
 Important disambiguation rule for vectors and matrices:
-- Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments...
-- Choose LINEAR ALGEBRA only if the lecture discusses abstract vector spaces...
+- Choose GEOMETRY if the lecture discusses vectors as arrows/directed segments in 2D/3D space,
+  geometric properties (distances, angles, projections), coordinate geometry, or spatial relationships.
+- Choose LINEAR ALGEBRA only if the lecture discusses abstract vector spaces, linear transformations
+  as functions, eigenvalues/eigenvectors, basis/span, or theoretical algebraic properties.
 - When in doubt with vectors, prefer GEOMETRY over LINEAR ALGEBRA.
 ```
 
