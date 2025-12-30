@@ -72,11 +72,11 @@ class TopicMappingService(
             // Domain-specific disambiguation:
             // "vector" alone is ambiguous; we boost Geometry vs Linear Algebra only when
             // the theme text contains stronger contextual cues.
-            if (geometrySignal && topicLower.contains("geometry")) score += 6
+            if (geometrySignal && topicLower.contains("geometry")) score += 10
             if (linearAlgebraSignal && (topicLower.contains("linear algebra") || topicLower.contains("linalg"))) score += 6
 
             // Some datasets use topic paths like "Geometry -> Vectors".
-            if (geometrySignal && topicLower.contains("coordinate")) score += 2
+            if (geometrySignal && topicLower.contains("coordinate")) score += 4
             if (linearAlgebraSignal && topicLower.contains("matrix")) score += 2
 
             // Strong boost for direct substring matches.
@@ -162,7 +162,10 @@ class TopicMappingService(
             "coordinate", "coordinates", "axis", "axes", "polygon", "polygons",
             "parallel", "perpendicular", "intersection",
             "dot", "cross", "projection", "rotate", "rotation", "reflect", "reflection",
-            "norm", "magnitude", "unit", "direction", "2d", "3d"
+            "norm", "magnitude", "unit", "direction", "2d", "3d",
+            "point", "points", "segment", "segments", "ray", "vertex", "vertices",
+            "congruent", "similar", "pythagorean", "euclidean", "cartesian",
+            "tangent", "secant", "arc", "sector", "geometric", "shape", "shapes"
         )
 
         private val LINEAR_ALGEBRA_HINTS = setOf(

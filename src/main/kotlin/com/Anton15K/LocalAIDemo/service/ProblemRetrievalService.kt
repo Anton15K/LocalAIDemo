@@ -163,9 +163,9 @@ class ProblemRetrievalService(
                 val existingResult = results[problemId]
                 
                 if (existingResult != null) {
-                    // Boost score if found by both methods
+                    // Boost score if found by both methods, but clamp to avoid >100%
                     results[problemId] = existingResult.copy(
-                        score = existingResult.score + (semanticScore * 0.5)
+                        score = clampScore(existingResult.score + (semanticScore * 0.5))
                     )
                 } else {
                     problem.id?.let { id ->
