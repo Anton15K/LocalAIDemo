@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: html(pageTitle='Admin', currentPage='admin', content=~{::content})}">
+<body>
+<div th:fragment="content">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Admin</h1>
+        <p class="mt-2 text-gray-600">Vector store and DeepMath ingestion controls</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Vector Store -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Vector Store</h2>
+                <span id="vs-running" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">unknown</span>
+            </div>
+
+            <div class="mt-4 text-sm text-gray-700 space-y-1">
+                <div>Rows: <span id="vs-rows" class="font-medium">-</span></div>
+                <div>Total problems: <span id="vs-total" class="font-medium">-</span></div>
+                <div>Indexed: <span id="vs-indexed" class="font-medium">-</span></div>
+                <div>Last error: <span id="vs-error" class="font-medium">-</span></div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Batch size</label>
+                    <input id="vs-batch" type="number" value="200" min="1" max="2000"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Delay (ms)</label>
+                    <input id="vs-delay" type="number" value="0" min="0"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+                <button id="vs-reindex"
+                        class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                    Reindex problems
+                </button>
+                <button id="vs-clear"
+                        class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-900 text-sm font-medium hover:bg-gray-300">
+                    Clear vector store
+                </button>
+            </div>
+
+            <p class="mt-4 text-xs text-gray-500">
+                Reindexing truncates <span class="font-medium">vector_store</span> and rebuilds embeddings.
+            </p>
+        </div>
+
+        <!-- DeepMath ingestion -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">DeepMath Ingestion</h2>
+                <span id="dm-running" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">unknown</span>
+            </div>
+
+            <div class="mt-4 text-sm text-gray-700 space-y-1">
+                <div>Dataset: <span id="dm-dataset" class="font-medium">-</span></div>
+                <div>Split: <span id="dm-split" class="font-medium">-</span></div>
+                <div>Progress: <span id="dm-progress" class="font-medium">-</span></div>
+                <div>Imported / skipped / failed: <span id="dm-stats" class="font-medium">-</span></div>
+                <div>Last error: <span id="dm-error" class="font-medium">-</span></div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Dataset</label>
+                    <input id="dm-dataset-input" type="text" value="zwhe99/DeepMath-103K"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Split</label>
+                    <input id="dm-split-input" type="text" value="train"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Config</label>
+                    <input id="dm-config-input" type="text" value="default"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Batch size (<=100)</label>
+                    <input id="dm-batch" type="number" value="100" min="1" max="100"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Max rows (0=all)</label>
+                    <input id="dm-maxrows" type="number" value="0" min="0"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Request delay (ms)</label>
+                    <input id="dm-reqdelay" type="number" value="250" min="0"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <input id="dm-index" type="checkbox" class="rounded border-gray-300" />
+                        Index embeddings while ingesting
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Index chunk size</label>
+                    <input id="dm-index-chunk" type="number" value="100" min="1"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Index delay (ms)</label>
+                    <input id="dm-index-delay" type="number" value="200" min="0"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button id="dm-start"
+                        class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                    Start ingestion
+                </button>
+            </div>
+
+            <p class="mt-4 text-xs text-gray-500">
+                Uses Hugging Face datasets-server paging (length capped to 100).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchJson(url) {
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            return { ok: res.ok, status: res.status, json: await res.json() };
+        }
+
+        function setPill(el, running) {
+            el.textContent = running ? 'running' : 'idle';
+            el.className = 'text-xs px-2 py-1 rounded ' + (running ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800');
+        }
+
+        async function refreshVectorStore() {
+            const pill = document.getElementById('vs-running');
+            const data = await fetchJson('/api/admin/vector-store/status');
+            if (!data.ok) return;
+            const s = data.json;
+            setPill(pill, !!s.running);
+            document.getElementById('vs-rows').textContent = s.vectorStoreCount ?? '-';
+            document.getElementById('vs-total').textContent = s.totalProblems ?? '-';
+            document.getElementById('vs-indexed').textContent = s.indexedProblems ?? '-';
+            document.getElementById('vs-error').textContent = s.lastError ?? '-';
+
+            const disabled = !!s.running;
+            document.getElementById('vs-reindex').disabled = disabled;
+            document.getElementById('vs-clear').disabled = disabled;
+        }
+
+        async function refreshDeepMath() {
+            const pill = document.getElementById('dm-running');
+            const data = await fetchJson('/api/admin/ingestion/deepmath/status');
+            if (!data.ok) return;
+            const s = data.json;
+            setPill(pill, !!s.running);
+
+            document.getElementById('dm-dataset').textContent = s.dataset ?? '-';
+            document.getElementById('dm-split').textContent = s.split ?? '-';
+            const total = s.effectiveTotal ?? s.totalRows;
+            const processed = s.processedRows ?? 0;
+            document.getElementById('dm-progress').textContent = (total ? (processed + '/' + total) : (processed + '/?'));
+            document.getElementById('dm-stats').textContent = `${s.imported ?? 0} / ${s.skipped ?? 0} / ${s.failed ?? 0}`;
+            document.getElementById('dm-error').textContent = s.lastError ?? '-';
+
+            const disabled = !!s.running;
+            document.getElementById('dm-start').disabled = disabled;
+
+            // best-effort: keep inputs in sync with configured defaults when idle
+            if (!s.running && s.dataset) document.getElementById('dm-dataset-input').value = s.dataset;
+            if (!s.running && s.split) document.getElementById('dm-split-input').value = s.split;
+            if (!s.running && s.config) document.getElementById('dm-config-input').value = s.config;
+            if (!s.running && s.batchSize) document.getElementById('dm-batch').value = s.batchSize;
+            if (!s.running && s.maxRows !== null && s.maxRows !== undefined) document.getElementById('dm-maxrows').value = s.maxRows;
+            if (!s.running && s.requestDelayMs !== null && s.requestDelayMs !== undefined) document.getElementById('dm-reqdelay').value = s.requestDelayMs;
+            if (!s.running && s.indexEmbeddings !== null && s.indexEmbeddings !== undefined) document.getElementById('dm-index').checked = !!s.indexEmbeddings;
+            if (!s.running && s.indexChunkSize) document.getElementById('dm-index-chunk').value = s.indexChunkSize;
+            if (!s.running && s.indexDelayMs !== null && s.indexDelayMs !== undefined) document.getElementById('dm-index-delay').value = s.indexDelayMs;
+        }
+
+        document.getElementById('vs-reindex').addEventListener('click', async () => {
+            const batch = document.getElementById('vs-batch').value;
+            const delay = document.getElementById('vs-delay').value;
+            await fetch(`/api/admin/vector-store/reindex-problems?batchSize=${encodeURIComponent(batch)}&delayMs=${encodeURIComponent(delay)}`, { method: 'POST' });
+            await refreshVectorStore();
+        });
+
+        document.getElementById('vs-clear').addEventListener('click', async () => {
+            await fetch('/api/admin/vector-store/clear', { method: 'POST' });
+            await refreshVectorStore();
+        });
+
+        document.getElementById('dm-start').addEventListener('click', async () => {
+            const dataset = document.getElementById('dm-dataset-input').value;
+            const split = document.getElementById('dm-split-input').value;
+            const config = document.getElementById('dm-config-input').value;
+            const batchSize = document.getElementById('dm-batch').value;
+            const maxRows = document.getElementById('dm-maxrows').value;
+            const requestDelayMs = document.getElementById('dm-reqdelay').value;
+            const indexEmbeddings = document.getElementById('dm-index').checked;
+            const indexChunkSize = document.getElementById('dm-index-chunk').value;
+            const indexDelayMs = document.getElementById('dm-index-delay').value;
+
+            const qs = new URLSearchParams({
+                dataset,
+                split,
+                config,
+                batchSize,
+                maxRows,
+                requestDelayMs,
+                indexEmbeddings: String(indexEmbeddings),
+                indexChunkSize,
+                indexDelayMs
+            });
+
+            await fetch(`/api/admin/ingestion/deepmath/start?${qs.toString()}`, { method: 'POST' });
+            await refreshDeepMath();
+        });
+
+        (async function boot() {
+            await refreshVectorStore();
+            await refreshDeepMath();
+            setInterval(refreshVectorStore, 2000);
+            setInterval(refreshDeepMath, 2000);
+        })();
+    </script>
+</div>
+</body>
+</html>

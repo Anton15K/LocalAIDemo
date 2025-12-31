@@ -23,6 +23,11 @@ class WebController(
     private val lectureProcessingService: LectureProcessingService
 ) {
 
+    @GetMapping("/admin")
+    fun admin(): String {
+        return "admin"
+    }
+
     @GetMapping("/")
     fun home(model: Model): String {
         val lectureCount = lectureRepository.count()
@@ -101,7 +106,7 @@ class WebController(
             .orElseThrow { NoSuchElementException("Lecture not found with id: $id") }
 
         // If lecture is not analyzed yet, show processing view
-        val status = lecture.status?.toString()
+        val status = lecture.status.toString()
         if (status == "PENDING" || status == "PROCESSING") {
             model.addAttribute("lecture", lecture)
             return "lectures/processing"
@@ -122,6 +127,30 @@ class WebController(
         model.addAttribute("problems", problems)
 
         return "lectures/detail"
+    }
+
+    @GetMapping("/lectures/{id}/problems")
+    fun lectureProblems(
+        @PathVariable id: UUID,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "50") topK: Int,
+        model: Model
+    ): String {
+        val lecture = lectureRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Lecture not found with id: $id") }
+
+        val problems = lectureProcessingService.getRecommendedProblems(
+            lectureId = id,
+            topK = topK,
+            pageable = PageRequest.of(page, size)
+        )
+
+        model.addAttribute("lecture", lecture)
+        model.addAttribute("problems", problems)
+        model.addAttribute("topK", topK)
+
+        return "lectures/problems"
     }
 
     @PostMapping("/lectures/{id}/process")
