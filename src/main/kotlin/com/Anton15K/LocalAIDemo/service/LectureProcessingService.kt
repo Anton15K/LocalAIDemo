@@ -23,6 +23,7 @@ class LectureProcessingService(
         private val chunkThemeAggregationService: ChunkThemeAggregationService,
         private val topicMappingService: TopicMappingService,
         private val problemRetrievalService: ProblemRetrievalService,
+        private val assemblyAiService: AssemblyAiService,
         @org.springframework.beans.factory.annotation.Value(
                 "\${app.theme-extraction.chunk-level-enabled:true}"
         )
@@ -43,6 +44,54 @@ class LectureProcessingService(
                         updatedAt = Instant.now()
                 )
         return lectureRepository.save(lecture)
+    }
+
+    /** Create a new lecture from a video file. */
+    @Transactional
+    fun createLectureFromVideo(title: String, videoBytes: ByteArray, uploadedBy: String? = null): Lecture {
+        val lecture = Lecture(
+            title = title,
+            transcript = null, // Will be filled after transcription
+            uploadedBy = uploadedBy,
+            status = LectureStatus.PENDING,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
+        )
+        val savedLecture = lectureRepository.save(lecture)
+        
+        // We will store the bytes in a way that transcription can access it, 
+        // but for now let's keep it simple and just return the lecture.
+        // The actual transcription should happen in a separate step or background.
+        return savedLecture
+    }
+
+    /** Transcribe video and update lecture transcript. */
+    @Transactional
+    fun transcribeVideoForLecture(lectureId: UUID, videoBytes: ByteArray) {
+        val lecture = lectureRepository.findById(lectureId).orElseThrow {
+            IllegalArgumentException("Lecture not found: $lectureId")
+        }
+        
+        try {
+            logger.info("Starting transcription for lecture: ${lecture.title}")
+            val transcript = assemblyAiService.transcribeVideo(videoBytes)
+            
+            val updatedLecture = lecture.copy(
+                transcript = transcript,
+                updatedAt = Instant.now()
+            )
+            lectureRepository.save(updatedLecture)
+            logger.info("Transcription completed for lecture: ${lecture.title}")
+        } catch (e: Exception) {
+            logger.error("Transcription failed for lecture ${lecture.id}: ${e.message}", e)
+            val failedLecture = lecture.copy(
+                status = LectureStatus.FAILED,
+                errorMessage = "Transcription failed: ${e.message}",
+                updatedAt = Instant.now()
+            )
+            lectureRepository.save(failedLecture)
+            throw e
+        }
     }
 
     /** Process a lecture: chunk transcript, extract themes, and prepare for retrieval. */

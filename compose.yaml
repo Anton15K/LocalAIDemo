@@ -106,6 +106,7 @@ services:
       APP_INGESTION_DEEPMATH_INDEX_CHUNK_SIZE: "100"
       APP_INGESTION_DEEPMATH_INDEX_DELAY_MS: "200"
       # Provide your token via host env var HUGGINGFACE_TOKEN (optional for public datasets)
+      APP_ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY:-}
       APP_HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
     depends_on:
       postgres:

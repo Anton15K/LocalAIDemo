@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 import java.util.UUID
 
@@ -71,29 +72,47 @@ class WebController(
     @PostMapping("/lectures/create")
     fun createLecture(
         @RequestParam title: String,
-        @RequestParam transcript: String,
+        @RequestParam(required = false) transcript: String?,
+        @RequestParam(required = false) video: MultipartFile?,
         @RequestParam(required = false) uploadedBy: String?,
         @RequestParam action: String,
         redirectAttributes: RedirectAttributes
     ): String {
         return try {
-            val lecture = lectureProcessingService.createLecture(title, transcript, uploadedBy)
-            
-            if (action == "analyze") {
-                // Process asynchronously - just start it and redirect
+            if (video != null && !video.isEmpty) {
+                val videoBytes = video.bytes
+                val lecture = lectureProcessingService.createLectureFromVideo(title, videoBytes, uploadedBy)
+                
+                // Start transcription and optional analysis in background
                 Thread {
                     try {
-                        lectureProcessingService.processLecture(lecture.id!!)
+                        lectureProcessingService.transcribeVideoForLecture(lecture.id!!, videoBytes)
+                        if (action == "analyze") {
+                            lectureProcessingService.processLecture(lecture.id!!)
+                        }
                     } catch (e: Exception) {
-                        // Error will be stored in the lecture status
+                        // Error handled inside service
                     }
                 }.start()
-                redirectAttributes.addFlashAttribute("message", "Lecture created and analysis started!")
+                
+                redirectAttributes.addFlashAttribute("message", "Video uploaded. Transcription and analysis started in background.")
+                "redirect:/lectures/${lecture.id}"
+            } else if (!transcript.isNullOrBlank()) {
+                val lecture = lectureProcessingService.createLecture(title, transcript, uploadedBy)
+                if (action == "analyze") {
+                    Thread {
+                        try {
+                            lectureProcessingService.processLecture(lecture.id!!)
+                        } catch (e: Exception) { }
+                    }.start()
+                    redirectAttributes.addFlashAttribute("message", "Lecture created and analysis started!")
+                } else {
+                    redirectAttributes.addFlashAttribute("message", "Lecture saved as draft!")
+                }
+                "redirect:/lectures/${lecture.id}"
             } else {
-                redirectAttributes.addFlashAttribute("message", "Lecture saved as draft!")
+                throw IllegalArgumentException("Either transcript or video must be provided")
             }
-            
-            "redirect:/lectures/${lecture.id}"
         } catch (e: Exception) {
             redirectAttributes.addFlashAttribute("error", "Failed to create lecture: ${e.message}")
             "redirect:/lectures/new"

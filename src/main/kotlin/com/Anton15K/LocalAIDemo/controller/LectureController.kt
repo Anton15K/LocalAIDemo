@@ -6,8 +6,10 @@ import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
 @RestController
@@ -30,6 +32,39 @@ class LectureController(
             uploadedBy = request.uploadedBy
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(dtoMapper.toLectureResponse(lecture))
+    }
+
+    /**
+     * Create a new lecture from a video file.
+     */
+    @PostMapping("/upload-video", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadVideo(
+        @RequestParam("title") title: String,
+        @RequestParam("video") video: MultipartFile,
+        @RequestParam(value = "uploadedBy", required = false) uploadedBy: String?
+    ): ResponseEntity<LectureResponse> {
+        logger.info("Uploading video for lecture: $title")
+        if (video.isEmpty) {
+            return ResponseEntity.badRequest().build()
+        }
+        val videoBytes = video.bytes
+        val lecture = lectureProcessingService.createLectureFromVideo(
+            title = title,
+            videoBytes = videoBytes,
+            uploadedBy = uploadedBy
+        )
+        
+        // Background processing
+        Thread {
+            try {
+                lectureProcessingService.transcribeVideoForLecture(lecture.id!!, videoBytes)
+                lectureProcessingService.processLecture(lecture.id!!)
+            } catch (e: Exception) {
+                // Handled in service
+            }
+        }.start()
+        
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(dtoMapper.toLectureResponse(lecture))
     }
 
     /**

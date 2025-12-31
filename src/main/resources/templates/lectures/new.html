@@ -17,7 +17,7 @@
 
     <!-- Form -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl">
-        <form action="/lectures/create" method="post" class="p-6 space-y-6">
+        <form action="/lectures/create" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
             <div>
                 <label for="title" class="block text-sm font-medium text-gray-700">Lecture Title *</label>
                 <input type="text" id="title" name="title" required
@@ -25,12 +25,33 @@
                        placeholder="e.g., Introduction to Calculus - Lecture 1">
             </div>
 
-            <div>
-                <label for="transcript" class="block text-sm font-medium text-gray-700">Lecture Transcript *</label>
-                <p class="mt-1 text-sm text-gray-500">Paste the full transcript or speech content from the lecture.</p>
-                <textarea id="transcript" name="transcript" rows="15" required
-                          class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3 font-mono text-sm"
-                          placeholder="Today we're going to discuss derivatives. The derivative of a function measures the rate of change..."></textarea>
+            <div x-data="{ uploadType: 'text' }">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Lecture Content Source</label>
+                <div class="flex space-x-4 mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="uploadType" value="text" class="form-radio text-indigo-600">
+                        <span class="ml-2">Text Transcript</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="uploadType" value="video" class="form-radio text-indigo-600">
+                        <span class="ml-2">Video File</span>
+                    </label>
+                </div>
+
+                <div x-show="uploadType === 'text'">
+                    <label for="transcript" class="block text-sm font-medium text-gray-700">Lecture Transcript *</label>
+                    <p class="mt-1 text-sm text-gray-500">Paste the full transcript or speech content from the lecture.</p>
+                    <textarea id="transcript" name="transcript" rows="15" :required="uploadType === 'text'"
+                              class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3 font-mono text-sm"
+                              placeholder="Today we're going to discuss derivatives. The derivative of a function measures the rate of change..."></textarea>
+                </div>
+
+                <div x-show="uploadType === 'video'">
+                    <label for="video" class="block text-sm font-medium text-gray-700">Upload Video *</label>
+                    <p class="mt-1 text-sm text-gray-500">Upload a video file to be transcribed automatically using AssemblyAI.</p>
+                    <input type="file" id="video" name="video" accept="video/*,audio/*" :required="uploadType === 'video'"
+                           class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
             </div>
 
             <div>
