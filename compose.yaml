@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      test: [ "CMD-SHELL", "pg_isready -U myuser -d mydatabase" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,12 +27,13 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: localai-ollama
+    profiles: [ "docker-ollama" ]
     ports:
       - "11435:11434"
     volumes:
       - ~/.ollama:/root/.ollama
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: [ "CMD", "ollama", "list" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -48,12 +49,13 @@ services:
     #           count: all
     #           capabilities: [gpu]
 
-  # ===========================================
-  # Model initialization (pull required models)
-  # ===========================================
+    # ===========================================
+    # Model initialization (pull required models)
+    # ===========================================
   ollama-init:
     image: ollama/ollama:latest
     container_name: localai-ollama-init
+    profiles: [ "docker-ollama" ]
     depends_on:
       ollama:
         condition: service_healthy
@@ -61,14 +63,14 @@ services:
       - ~/.ollama:/root/.ollama
     environment:
       - OLLAMA_HOST=ollama:11434
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: [ "/bin/sh", "-c" ]
     command:
       - |
         echo "Waiting for Ollama to be ready..."
         sleep 5
-        echo "Pulling mistral model..."
-        ollama list | grep -q mistral || ollama pull mistral
-        echo "Pulling nomic-embed-text model..."
+        echo "Pulling deepseek-v3.1:671b-cloud model..."
+        ollama list | grep -q deepseek-v3.1:671b-cloud || ollama pull deepseek-v3.1:671b-cloud
+        echo "Pulling embedding model (nomic-embed-text)..."
           ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text
         echo "Models pulled successfully!"
     networks:
@@ -86,12 +88,15 @@ services:
       - "8080:8080"
     environment:
       # Database
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase  # Internal container port
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase # Internal container port
       SPRING_DATASOURCE_USERNAME: myuser
       SPRING_DATASOURCE_PASSWORD: secret
       # Ollama
-      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
-      SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: mistral
+      # Default: use native Ollama on the host (faster on macOS due to Metal acceleration)
+      # To use Docker Ollama instead, start with: docker compose --profile docker-ollama up --build
+      # and set: OLLAMA_BASE_URL=http://ollama:11434
+      SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: deepseek-v3.1:671b-cloud
       SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL: nomic-embed-text
       # JPA
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
@@ -110,10 +115,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health/live"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health/live" ]
       interval: 30s
       timeout: 10s
       retries: 3
