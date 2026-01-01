@@ -41,11 +41,15 @@ class ThemeExtractionService(
      * Extract themes from a single chunk of text. Uses a simplified prompt optimized for shorter
      * text.
      */
-    fun extractThemesFromChunk(chunkText: String, chunkIndex: Int): List<ExtractedTheme> {
+    fun extractThemesFromChunk(
+            chunkText: String,
+            chunkIndex: Int,
+            maxThemesPerChunkOverride: Int? = null
+    ): List<ExtractedTheme> {
         logger.debug("Extracting themes from chunk {} (length: {})", chunkIndex, chunkText.length)
 
         val topicsContext = getTopicsContext()
-        val prompt = buildChunkPrompt(chunkText, topicsContext)
+        val prompt = buildChunkPrompt(chunkText, topicsContext, maxThemesPerChunkOverride)
 
         return try {
             val response = chatClient.build().prompt().user(prompt).call().content()
@@ -99,7 +103,13 @@ class ThemeExtractionService(
         cachedTopicsContext = null
     }
 
-    private fun buildChunkPrompt(chunkText: String, topicsContext: String): String {
+    private fun buildChunkPrompt(
+            chunkText: String,
+            topicsContext: String,
+            maxThemesPerChunkOverride: Int?
+    ): String {
+        val effectiveMaxThemesPerChunk =
+                (maxThemesPerChunkOverride ?: maxThemesPerChunk).coerceIn(1, 12)
         return """
             Identify the main mathematical themes in this lecture segment.
 
@@ -108,7 +118,7 @@ class ThemeExtractionService(
 
             $topicsContext
 
-            Return at most $maxThemesPerChunk themes as JSON array:
+            Return at most $effectiveMaxThemesPerChunk themes as JSON array:
             [{"name": "...", "confidence": 0.0-1.0, "summary": "...", "keywords": [...], "mappedTopic": "..." or null}]
 
             TEXT:
@@ -121,7 +131,7 @@ class ThemeExtractionService(
     }
 
     /** Extract themes from lecture transcript text. */
-    fun extractThemes(transcript: String): List<ExtractedTheme> {
+    fun extractThemes(transcript: String, maxThemesOverride: Int? = null): List<ExtractedTheme> {
         logger.info("Extracting themes from transcript of length: ${transcript.length}")
 
         val trimmedTranscript = truncateTranscript(transcript, maxTranscriptChars)
@@ -154,14 +164,19 @@ class ThemeExtractionService(
                     "Common math topics: Algebra, Geometry, Number Theory, Combinatorics, Probability, Calculus, Linear Algebra, Trigonometry"
                 }
 
-        val prompt = buildPrompt(trimmedTranscript, topicsContext)
+        val prompt = buildPrompt(trimmedTranscript, topicsContext, maxThemesOverride)
 
         val response = chatClient.build().prompt().user(prompt).call().content()
 
         return parseThemeResponse(response ?: "[]")
     }
 
-    private fun buildPrompt(transcript: String, topicsContext: String): String {
+    private fun buildPrompt(
+            transcript: String,
+            topicsContext: String,
+            maxThemesOverride: Int?
+    ): String {
+        val effectiveMaxThemes = (maxThemesOverride ?: maxThemes).coerceIn(1, 30)
         return """
             You are an expert at analyzing educational content and identifying mathematical topics.
             
@@ -175,7 +190,7 @@ class ThemeExtractionService(
             
             $topicsContext
 
-            Return at most $maxThemes themes.
+            Return at most $effectiveMaxThemes themes.
             
             For each theme you identify, provide:
             1. name: A concise name for the theme/topic

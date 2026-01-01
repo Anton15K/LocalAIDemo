@@ -1,5 +1,6 @@
 package com.Anton15K.LocalAIDemo.service
 
+import kotlin.math.ceil
 import kotlin.math.max
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -25,12 +26,27 @@ class ChunkThemeAggregationService(
      * @param chunkThemes List of theme lists, one per chunk
      * @return Aggregated themes meeting minimum occurrence requirements
      */
-    fun aggregateThemes(chunkThemes: List<List<ExtractedTheme>>): List<ExtractedTheme> {
+    fun aggregateThemes(
+            chunkThemes: List<List<ExtractedTheme>>,
+            minChunkOccurrencesOverride: Int? = null,
+            minOccurrenceRatioOverride: Double? = null,
+            maxFinalThemesOverride: Int? = null
+    ): List<ExtractedTheme> {
         if (chunkThemes.isEmpty()) return emptyList()
 
         val totalChunks = chunkThemes.size
+        val effectiveMinChunkOccurrences =
+                (minChunkOccurrencesOverride ?: minChunkOccurrences).coerceAtLeast(1)
+        val effectiveMinOccurrenceRatio =
+                (minOccurrenceRatioOverride ?: minOccurrenceRatio).coerceIn(0.0, 1.0)
+        val effectiveMaxFinalThemes =
+                (maxFinalThemesOverride ?: maxFinalThemes).coerceAtLeast(1)
+
         val dynamicMinOccurrences =
-                max(minChunkOccurrences, (totalChunks * minOccurrenceRatio).toInt())
+                max(
+                        effectiveMinChunkOccurrences,
+                        ceil(totalChunks * effectiveMinOccurrenceRatio).toInt()
+                )
 
         logger.debug(
                 "Aggregating themes from {} chunks, minOccurrences={}",
@@ -73,7 +89,7 @@ class ChunkThemeAggregationService(
                         }
                         .map { (_, occurrences) -> mergeThemeOccurrences(occurrences) }
                         .sortedByDescending { it.confidence }
-                        .take(maxFinalThemes)
+                        .take(effectiveMaxFinalThemes)
 
         logger.info(
                 "Aggregated {} chunk theme groups into {} final themes",

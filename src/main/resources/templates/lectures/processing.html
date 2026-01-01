@@ -26,12 +26,39 @@
                       th:text="${lecture.status}">STATUS</span>
                 <form th:if="${lecture.status.toString() == 'PENDING'}" 
                       th:action="@{/lectures/{id}/process(id=${lecture.id})}" method="post" class="inline">
+                    <input type="hidden" name="tuningLevel" value="5">
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
                         Analyze Now
                     </button>
                 </form>
             </div>
         </div>
+    </div>
+
+    <div th:if="${lecture.status.toString() == 'PENDING'}" class="bg-white rounded-lg shadow-lg p-6 mb-6 max-w-3xl">
+        <h2 class="text-lg font-semibold text-gray-900">Analysis Settings</h2>
+        <p class="mt-1 text-sm text-gray-500">Adjust granularity before starting analysis.</p>
+        <form th:action="@{/lectures/{id}/process(id=${lecture.id})}" method="post" class="mt-4 space-y-4">
+            <div>
+                <label for="tuningLevel" class="block text-sm font-medium text-gray-700">Granularity</label>
+                <input type="range" id="tuningLevel" name="tuningLevel" min="1" max="10" value="5" class="w-full">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Coarse</span>
+                    <span>Fine</span>
+                </div>
+            </div>
+            <div>
+                <label for="lectureMinutes" class="block text-sm font-medium text-gray-700">Lecture Length (minutes, optional)</label>
+                <input type="number" id="lectureMinutes" name="lectureMinutes" min="1" step="1"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-3"
+                       placeholder="e.g., 90">
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+                    Start Analysis
+                </button>
+            </div>
+        </form>
     </div>
 
     <div class="bg-white rounded-lg shadow-lg p-10 text-center">

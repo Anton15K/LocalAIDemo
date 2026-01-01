@@ -75,6 +75,8 @@ class WebController(
         @RequestParam(required = false) transcript: String?,
         @RequestParam(required = false) video: MultipartFile?,
         @RequestParam(required = false) uploadedBy: String?,
+        @RequestParam(required = false) tuningLevel: Int?,
+        @RequestParam(required = false) lectureMinutes: Int?,
         @RequestParam action: String,
         redirectAttributes: RedirectAttributes
     ): String {
@@ -88,7 +90,11 @@ class WebController(
                     try {
                         lectureProcessingService.transcribeVideoForLecture(lecture.id!!, videoBytes)
                         if (action == "analyze") {
-                            lectureProcessingService.processLecture(lecture.id!!)
+                            lectureProcessingService.processLecture(
+                                    lectureId = lecture.id!!,
+                                    tuningLevel = tuningLevel,
+                                    lectureMinutes = lectureMinutes
+                            )
                         }
                     } catch (e: Exception) {
                         // Error handled inside service
@@ -102,7 +108,11 @@ class WebController(
                 if (action == "analyze") {
                     Thread {
                         try {
-                            lectureProcessingService.processLecture(lecture.id!!)
+                            lectureProcessingService.processLecture(
+                                    lectureId = lecture.id!!,
+                                    tuningLevel = tuningLevel,
+                                    lectureMinutes = lectureMinutes
+                            )
                         } catch (e: Exception) { }
                     }.start()
                     redirectAttributes.addFlashAttribute("message", "Lecture created and analysis started!")
@@ -175,13 +185,19 @@ class WebController(
     @PostMapping("/lectures/{id}/process")
     fun processLecture(
         @PathVariable id: UUID,
+        @RequestParam(required = false) tuningLevel: Int?,
+        @RequestParam(required = false) lectureMinutes: Int?,
         redirectAttributes: RedirectAttributes
     ): String {
         return try {
             // Process asynchronously
             Thread {
                 try {
-                    lectureProcessingService.processLecture(id)
+                    lectureProcessingService.processLecture(
+                            lectureId = id,
+                            tuningLevel = tuningLevel,
+                            lectureMinutes = lectureMinutes
+                    )
                 } catch (e: Exception) {
                     // Error will be stored in the lecture status
                 }

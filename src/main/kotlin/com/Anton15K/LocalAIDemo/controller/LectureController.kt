@@ -71,9 +71,17 @@ class LectureController(
      * Process a lecture (extract themes).
      */
     @PostMapping("/{id}/process")
-    fun processLecture(@PathVariable id: UUID): ResponseEntity<LectureResponse> {
+    fun processLecture(
+        @PathVariable id: UUID,
+        @RequestParam(required = false) tuningLevel: Int?,
+        @RequestParam(required = false) lectureMinutes: Int?
+    ): ResponseEntity<LectureResponse> {
         logger.info("Processing lecture: $id")
-        val lecture = lectureProcessingService.processLecture(id)
+        val lecture = lectureProcessingService.processLecture(
+            lectureId = id,
+            tuningLevel = tuningLevel,
+            lectureMinutes = lectureMinutes
+        )
         return ResponseEntity.ok(dtoMapper.toLectureResponse(lecture))
     }
 

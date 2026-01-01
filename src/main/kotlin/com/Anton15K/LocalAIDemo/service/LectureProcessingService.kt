@@ -21,6 +21,7 @@ class LectureProcessingService(
         private val textChunkingService: TextChunkingService,
         private val themeExtractionService: ThemeExtractionService,
         private val chunkThemeAggregationService: ChunkThemeAggregationService,
+    private val themeExtractionTuningService: ThemeExtractionTuningService,
         private val topicMappingService: TopicMappingService,
         private val problemRetrievalService: ProblemRetrievalService,
         private val assemblyAiService: AssemblyAiService,
@@ -96,7 +97,11 @@ class LectureProcessingService(
 
     /** Process a lecture: chunk transcript, extract themes, and prepare for retrieval. */
     @Transactional
-    fun processLecture(lectureId: UUID): Lecture {
+    fun processLecture(
+            lectureId: UUID,
+            tuningLevel: Int? = null,
+            lectureMinutes: Int? = null
+    ): Lecture {
         val lecture =
                 lectureRepository.findById(lectureId).orElseThrow {
                     IllegalArgumentException("Lecture not found: $lectureId")
@@ -114,8 +119,24 @@ class LectureProcessingService(
                     lecture.copy(status = LectureStatus.PROCESSING, updatedAt = Instant.now())
             lectureRepository.save(processingLecture)
 
-            // 1. Chunk the transcript
-            val chunks = textChunkingService.chunkSemantically(lecture.transcript!!)
+                val tuning = themeExtractionTuningService.tune(
+                    transcript = lecture.transcript!!,
+                    request = ThemeExtractionTuningService.TuningRequest(
+                        granularityLevel = tuningLevel,
+                        lectureMinutes = lectureMinutes
+                    )
+                )
+
+                // 1. Chunk the transcript
+                val chunks =
+                    if (tuning.chunkLevelEnabled) {
+                    textChunkingService.chunkSemantically(
+                        lecture.transcript!!,
+                        targetChunkSize = tuning.chunkSizeWords
+                    )
+                    } else {
+                    listOf(TextChunk(text = lecture.transcript!!, index = 0, tokenStart = 0, tokenEnd = 0))
+                    }
             logger.debug("Created ${chunks.size} chunks from transcript")
 
             // Save chunks
@@ -133,11 +154,14 @@ class LectureProcessingService(
 
             // 2. Extract themes (chunk-level or full transcript)
             val extractedThemes =
-                    if (chunkLevelEnabled && chunks.size > 1) {
-                        extractThemesFromChunks(chunks)
+                    if (chunkLevelEnabled && tuning.chunkLevelEnabled && chunks.size > 1) {
+                        extractThemesFromChunks(chunks, tuning)
                     } else {
                         topicMappingService.mapThemesToExistingTopics(
-                                themeExtractionService.extractThemes(lecture.transcript!!)
+                        themeExtractionService.extractThemes(
+                            lecture.transcript!!,
+                            maxThemesOverride = tuning.maxFinalThemes
+                        )
                         )
                     }
             logger.info("Extracted ${extractedThemes.size} themes from lecture")
@@ -229,17 +253,30 @@ class LectureProcessingService(
     }
 
     /** Extract themes from individual chunks, then aggregate. */
-    private fun extractThemesFromChunks(chunks: List<TextChunk>): List<ExtractedTheme> {
+    private fun extractThemesFromChunks(
+            chunks: List<TextChunk>,
+            tuning: ThemeExtractionTuningService.TunedThemeExtractionSettings
+    ): List<ExtractedTheme> {
         logger.info("Extracting themes from {} chunks (chunk-level mode)", chunks.size)
 
         // Extract themes from each chunk
         val chunkThemes =
                 chunks.mapIndexed { index, chunk ->
-                    themeExtractionService.extractThemesFromChunk(chunk.text, index)
+                themeExtractionService.extractThemesFromChunk(
+                    chunkText = chunk.text,
+                    chunkIndex = index,
+                    maxThemesPerChunkOverride = tuning.maxThemesPerChunk
+                )
                 }
 
         // Aggregate across chunks (filters by occurrence threshold)
-        val aggregated = chunkThemeAggregationService.aggregateThemes(chunkThemes)
+        val aggregated =
+            chunkThemeAggregationService.aggregateThemes(
+                chunkThemes,
+                minChunkOccurrencesOverride = tuning.minChunkOccurrences,
+                minOccurrenceRatioOverride = tuning.minOccurrenceRatio,
+                maxFinalThemesOverride = tuning.maxFinalThemes
+            )
 
         // Clear topics cache after processing
         themeExtractionService.clearTopicsCache()
