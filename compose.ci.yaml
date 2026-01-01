@@ -1,0 +1,25 @@
+# CI overrides:
+# - avoid pulling/running Ollama (too heavy/slow for CI)
+# - disable ingestion on startup
+# - force Spring AI into a predictable "disabled" base URL
+#
+# Note: this keeps Postgres, Flyway, web UI, and REST API wired.
+
+services:
+  app:
+    image: localai-demo:ci
+    environment:
+      APP_INGESTION_DEEPMATH_ENABLED: "false"
+      APP_INGESTION_DEEPMATH_INDEX_EMBEDDINGS: "false"
+      # Point to a non-routable address so any accidental calls fail fast.
+      # If the app requires Ollama for startup, tests should cover graceful behavior.
+      SPRING_AI_OLLAMA_BASE_URL: http://127.0.0.1:9
+
+  # Ensure Postgres is still present (inherits from compose_2.yaml)
+  postgres: {}
+
+  # Disable docker-ollama profile services entirely in CI (compose won't start them)
+  ollama:
+    profiles: ["never"]
+  ollama-init:
+    profiles: ["never"]

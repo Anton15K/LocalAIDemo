@@ -1,5 +1,7 @@
 # LocalAIDemo — Lecture → Themes → Similar Math Problems
 
+[![CI](https://github.com/Anton15K/LocalAIDemo/actions/workflows/ci.yml/badge.svg)](https://github.com/Anton15K/LocalAIDemo/actions/workflows/ci.yml)
+
 A Kotlin/Spring Boot app that lets you upload a lecture transcript **or a video**, extracts lecture themes with an LLM (Ollama), and recommends similar problems from a math dataset using **pgvector** semantic search.
 
 It ships with both:
@@ -191,6 +193,18 @@ After similarity search returns candidate problems from the vector database, all
 - Integration tests: pgvector similarity queries with fixtures; REST endpoints via MockMvc.  
 - E2E (later): ingest MATH sample -> submit lecture snippet -> verify retrieved topics/problems.  
 - Load tests: measure p95 latency for retrieval and embedding batch throughput.
+
+## CI (GitHub Actions)
+
+This repo includes a Docker-friendly CI pipeline (see `.github/workflows/ci.yml`) that covers:
+
+- **Gradle build + unit tests** (`./gradlew clean test`)
+- **Docker image build** (multi-stage `Dockerfile`)
+- **Docker Compose smoke test** (starts Postgres + app and checks `/api/health/live` + `/api/health/ready`)
+
+CI uses `compose.ci.yaml` as an override to keep runs fast and deterministic:
+- disables heavy dataset ingestion on startup
+- does not start/pull Ollama models (LLM-dependent features are expected to be covered by unit/integration tests)
 
 ## Notes & assumptions
 - Speech-to-text is assumed via Whisper (local) or another provider; integrate behind a service interface.  
