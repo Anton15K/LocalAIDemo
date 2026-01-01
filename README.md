@@ -1,242 +1,190 @@
-# LocalAIDemo — Lecture-to-MATH Problem Retrieval
+# LocalAIDemo — Lecture → Themes → Similar Math Problems
 
-A Kotlin/Spring Boot 3.5 service that ingests lecture speech, extracts themes, and retrieves related problems from the open MATH dataset using Ollama-hosted models and pgvector for semantic search. This document outlines the target architecture, implementation plan, scaling considerations, and how to run the stack locally.
+A Kotlin/Spring Boot app that lets you upload a lecture transcript **or a video**, extracts lecture themes with an LLM (Ollama), and recommends similar problems from a math dataset using **pgvector** semantic search.
 
-## Current repo snapshot
-- **Language/Framework**: Kotlin 1.9, Spring Boot 3.5 (web, data-jpa, thymeleaf).  
-- **AI/Vector**: Spring AI starters for Ollama, HuggingFace, PostgresML embeddings, and pgvector vector store.  
-- **Runtime**: Docker Compose with `ollama/ollama` and `pgvector/pgvector:pg16`; Postgres exposed on `5432`, Ollama on `11434`.  
-- **App state**: Skeleton app (`LocalAiDemoApplication.kt`) with minimal configuration (`application.properties`).
+It ships with both:
+- a **web UI** (Thymeleaf)
+- a **REST API** (for automation / integrations)
 
-## High-level architecture
-```
-Client (web/CLI) -> API Gateway/Backend (Spring Boot)
-  |-- Lecture ingestion endpoint (text or audio upload)
-  |-- Background jobs for transcription + theme extraction
-  |-- Retrieval service over pgvector
-  |-- RAG orchestration (context -> model)
+## What’s in the current version
 
-Data plane:
-  - Object storage (audio + transcripts) [S3-compatible]
-  - Postgres + pgvector (problems, embeddings, lecture chunks)
-  - Ollama models (embedding + LLM for theme extraction & generation)
-  - Cache (Redis) for hot embeddings/prompts (future)
-```
+### Tech stack
+- **Kotlin** 2.1 + **Spring Boot** 3.4
+- **PostgreSQL 16 + pgvector** (via Spring AI `PgVectorStore`)
+- **Ollama** for:
+  - chat model (theme extraction)
+  - embedding model (vector search)
+- **Flyway** database migrations
 
-### Core components
-- **API service**: Spring Boot app exposing REST endpoints; stateless, can scale horizontally.  
-- **Embedding & LLM**: Ollama (e.g., `nomic-embed-text` / `mistral` / `llama3`) for embeddings and reasoning; HuggingFace/PostgresML embeddings also available.  
-- **Vector store**: pgvector inside Postgres; stores embeddings for MATH problems and (optionally) lecture chunks/themes.  
-- **Job/queue** (future): Redis/RabbitMQ/Kafka-backed workers for async transcription and ingestion.  
-- **UI** (future): Web dashboard to upload audio/text, preview themes, and fetch recommended problems.
+### Implemented UI pages
+- `/` — home dashboard (counts + recent lectures)
+- `/admin` — admin page
+- `/lectures` — lectures list
+- `/lectures/new` — create lecture (paste transcript or upload video)
+- `/lectures/{id}` — lecture details (themes + problem recommendations)
+- `/lectures/{id}/problems` — paged recommendations
+- `/problems` — browse problems
+- `/problems/{id}` — problem details
 
-## Data model (proposed)
-- `problems` (id, source_id, statement, solution, topic, difficulty, metadata).  
-- `problem_embeddings` (problem_id FK, embedding vector, model_name, dim, created_at).  
-- `lectures` (id, title, source, uploaded_by, created_at, status, transcript_uri).  
-- `lecture_chunks` (id, lecture_id FK, chunk_text, token_start, token_end, embedding vector, theme_tags jsonb).  
-- `themes` (id, lecture_id FK, name, confidence, summary).  
-- Indexes: pgvector IVF/flat indexes on embedding columns; btree on topic/difficulty.
+### Implemented REST endpoints
 
-## Processing pipelines
-### MATH dataset ingestion
-1) Download/parse open MATH dataset (topics, statements, solutions).  
-2) Clean & normalize text; derive canonical topic taxonomy.  
-3) Embed statements (and optionally solutions) via Ollama embeddings.  
-4) Upsert into `problems` + `problem_embeddings` with vectors in pgvector.  
-5) Build pgvector index (e.g., `ivfflat` with cosine) and vacuum/analyze.
+#### Health
+- `GET /api/health` — overall health snapshot
+- `GET /api/health/live` — liveness probe
+- `GET /api/health/ready` — readiness probe
 
-### Lecture analysis (speech -> themes -> problems)
-1) **Input**: audio file or raw transcript.  
-2) **Transcription** (if audio): Whisper (local) or external STT; store transcript in object storage.  
-3) **Chunking**: split transcript into semantically coherent chunks (token-length + semantic break).  
-4) **Theme extraction**: LLM prompt to summarize and tag themes; persist in `themes` and on chunks.  
-5) **Embedding**: embed chunks with same model used for problems; store in `lecture_chunks`.  
-6) **Retrieval**: vector search against `problem_embeddings`, filtered by themes/topics.  
-7) **Ranking/formatting**: rerank (optional) and return curated list of problems with metadata.  
-8) **Response**: structured payload and (future) downloadable worksheet/HTML via Thymeleaf.
+#### Lectures
+- `POST /api/lectures` — create lecture from transcript
+- `POST /api/lectures/upload-video` — create lecture from video (multipart) + background transcription + analysis
+- `POST /api/lectures/{id}/process` — run theme extraction (optional tuning params)
+- `GET /api/lectures` — list lectures
+- `GET /api/lectures/{id}` — lecture detail
+- `GET /api/lectures/{id}/themes` — extracted themes
+- `GET /api/lectures/{id}/problems` — recommended problems (paged)
+- `DELETE /api/lectures/{id}` — delete lecture
 
-## API sketch (REST)
-- `POST /api/lectures` — upload transcript or audio; returns lecture id and processing status.  
-- `GET /api/lectures/{id}` — lecture metadata, themes, processing state.  
-- `GET /api/lectures/{id}/themes` — extracted themes with confidences.  
-- `GET /api/lectures/{id}/problems` — recommended problems; supports paging/topic filters.  
-- `POST /api/problems/ingest` — admin endpoint to ingest MATH dataset (streamed/async).  
-- `GET /api/health` — health check; optionally include model/db readiness probes.
+#### Problems
+- `GET /api/problems` — list problems
+- `GET /api/problems/{id}` — problem detail
+- `GET /api/problems/by-topic/{topic}` — list problems by topic
+- `GET /api/problems/topics` — list known topics
+- `POST /api/problems/import` — import problems from JSON payload
+- `POST /api/problems/import/jsonl` — import problems from an uploaded JSONL file
+- `POST /api/problems/sample` — create sample problems (quick dev seed)
 
-## Implementation plan (phased)
-**MVP (local)**
-1. Wire pgvector + datasource config; create schema migrations (Flyway/Liquibase).  
-2. Implement MATH dataset ingester (batch job) + embedding writer.  
-3. Expose basic endpoints: ingest problems, submit transcript text, fetch recommendations.  
-4. Implement chunking + theme extraction using Ollama LLM; store themes.  
-5. Retrieval against pgvector with cosine similarity; return top-N problems.
+#### Admin (dataset ingestion + vector store)
+- `GET /api/admin/ingestion/deepmath/status`
+- `POST /api/admin/ingestion/deepmath/start` — async ingestion from Hugging Face dataset-server
+- `GET /api/admin/vector-store/status`
+- `POST /api/admin/vector-store/clear` — truncates `vector_store`
+- `POST /api/admin/vector-store/reindex-problems` — rebuild embeddings (use after changing embedding model)
 
-**Phase 2 (quality & UX)**
-- Add audio upload + Whisper transcription path.  
-- Add reranking and better prompt templates; cache embeddings.  
-- Add Thymeleaf/React UI for uploads and results.  
-- Add background jobs (queue) for ingestion and transcription.  
-- Add observability (metrics/logging/traces) and request id propagation.
+## Quick start (Docker)
 
-**Phase 3 (scaling & prod)**
-- Containerize app; deploy via K8s with HPA on CPU/memory/QPS.  
-- Externalize Postgres/pgvector to managed service; add read replicas.  
-- Add Redis for caching and rate limiting; CDN for static assets.  
-- Blue/green or canary releases; migration automation.  
-- Security: authN/Z (OIDC), secret management, audit logging.
+This repo includes Docker Compose for Postgres + the Spring Boot app.
 
-## Scaling considerations
-- **Stateless API**: keep request processing stateless; move long tasks to workers.  
-- **Async pipelines**: transcription and ingestion via queue workers to prevent API timeouts.  
-- **Index strategy**: use IVF/flat indexes with tuned `lists` and `probes`; monitor recall/latency.  
-- **Batching**: batch embeddings and DB writes; use copy/`COPY` for ingest.  
-- **Caching**: cache embeddings for repeated transcripts; cache prompt responses if stable.  
-- **Streaming**: stream LLM outputs to clients for UX; support SSE/websocket for progress.  
-- **Model mgmt**: pin model versions; pre-pull Ollama models on deploy; monitor VRAM usage.  
-- **Observability**: metrics (latency, recall, QPS), structured logs, tracing (OpenTelemetry).  
-- **Back-pressure**: rate limit inputs; apply circuit breakers around Ollama and DB.  
-- **Data quality**: detect hallucinations; use deterministic prompting for theme extraction.
+There are **two** supported ways to run Ollama:
 
-## Quick Start (Docker - Recommended)
+1) **Recommended on macOS:** run Ollama natively (Metal acceleration) and let Docker connect to it.
+2) Run Ollama in Docker via a compose profile.
 
-Everything runs in Docker containers. No local Java installation required.
+### Option A (recommended on macOS): host Ollama + Docker Compose
 
-### 1. Start the full stack
+1) Start Ollama on the host and pull required models:
 ```bash
-# macOS performance tip:
-# Run Ollama natively on your Mac (uses Metal acceleration) and let Docker connect to it.
-# This is usually much faster than running Ollama inside Docker on macOS.
-
-# Start Ollama on the host (outside Docker)
 ollama serve
-
-# Ensure required models exist on the host
-ollama pull mistral
+ollama pull deepseek-v3.1:671b-cloud
 ollama pull nomic-embed-text
-
-# (Optional) If the dataset is gated/rate-limited, provide a Hugging Face token.
-# Do NOT commit tokens to git.
-export HUGGINGFACE_TOKEN='YOUR_TOKEN_HERE'
-
-# Build and start all services (first run takes ~5-10 minutes)
-docker compose up --build
-
-# Or run in background
-docker compose up --build -d
 ```
 
-If you prefer running Ollama inside Docker instead (usually slower on macOS), run:
+2) Start the stack:
 ```bash
-export OLLAMA_BASE_URL='http://ollama:11434'
+docker compose -f compose_2.yaml up --build
+```
+
+By default, the app inside Docker connects to host Ollama via:
+- `SPRING_AI_OLLAMA_BASE_URL=http://host.docker.internal:11434`
+
+### Option B: run Ollama in Docker (compose profile)
+
+```bash
 docker compose --profile docker-ollama up --build
 ```
 
-Note: On first startup, the app auto-loads the Hugging Face dataset `zwhe99/DeepMath-103K` into the `problems` table (about 103k rows). Embedding indexing is disabled by default because it can take a long time.
+When using this profile:
+- Ollama is exposed on **host** port `11435`
+- the app connects to `http://ollama:11434` inside the Docker network
 
-This starts:
-- **postgres** - PostgreSQL 16 with pgvector extension
-- **ollama** - Local LLM server
-- **ollama-init** - Automatically pulls required AI models (mistral, nomic-embed-text)
-- **app** - Spring Boot application
+### Ports
+- App: `http://localhost:8080`
+- Postgres: `localhost:5434` (container 5432)
+- Ollama (Docker profile): `http://localhost:11435`
 
-### 2. Wait for initialization
-The first startup takes time as it:
-1. Builds the Spring Boot app (~2-3 min)
-2. Downloads AI models (~2-5 min depending on connection)
+### Dataset ingestion on startup
 
-Monitor progress:
+`compose.yaml` enables DeepMath ingestion by default in the container using env vars:
+- `APP_INGESTION_DEEPMATH_ENABLED=true`
+- `APP_INGESTION_DEEPMATH_INDEX_EMBEDDINGS=true`
+
+If you don’t want ingestion on boot, disable those env vars (or set them to `false`).
+
+If the dataset requires auth, provide a Hugging Face token on the host:
 ```bash
-# Watch all logs
-docker compose logs -f
-
-# Check if app is ready
-docker compose logs app | tail -20
+export HUGGINGFACE_TOKEN='...'
 ```
 
-### 3. Verify everything is running
-```bash
-# Check service health
-curl http://localhost:8080/api/health
+### Video transcription (AssemblyAI)
 
-# Should return: {"status":"UP","components":{...}}
+Video uploads (`POST /api/lectures/upload-video` or the `/lectures/new` UI) rely on AssemblyAI for speech-to-text.
+
+Provide an API key on the host:
+```bash
+export ASSEMBLYAI_API_KEY='...'
 ```
 
-### 4. Useful Docker commands
+Docker Compose passes it through to the app container as `APP_ASSEMBLYAI_API_KEY`.
+
+## Local development (run app on your machine)
+
+This requires Java 21.
+
+1) Start Postgres (and optionally Ollama) with Docker:
 ```bash
-# Stop all services
-docker compose down
-
-# Stop and remove all data (fresh start)
-docker compose down -v
-
-# Rebuild app after code changes
-docker compose up --build app
-
-# View logs for specific service
-docker compose logs -f app
-docker compose logs -f ollama
-
-# Shell into a container
-docker exec -it localai-app sh
-docker exec -it localai-ollama sh
+docker compose up postgres -d
 ```
 
-## Local Development (Alternative)
-
-If you prefer running the app locally (requires Java 21):
-
-1) Start only infrastructure:
-   ```bash
-   docker compose up postgres ollama ollama-init -d
-   ```
-
-2) Run the app locally:
-   ```bash
-   ./gradlew bootRun
-   ```
-
-## API Quick Start
-
-### Create sample problems
+2) Start Ollama (if not already running):
 ```bash
-curl -X POST http://localhost:8080/api/problems/sample
+ollama serve
 ```
 
-### Submit a lecture transcript
+3) Run the app:
 ```bash
-curl -X POST http://localhost:8080/api/lectures \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Introduction to Calculus",
-    "transcript": "Today we will discuss derivatives. The derivative of x squared is 2x. We also cover the chain rule and integration basics..."
-  }'
+./gradlew bootRun
 ```
 
-### Process the lecture (extract themes)
+## Configuration notes
+
+App configuration lives in `src/main/resources/application.properties`.
+
+Key settings:
+- `spring.datasource.*`
+- `spring.ai.ollama.base-url` (default `http://localhost:11434`)
+- `spring.ai.ollama.chat.options.model` — chat LLM used for theme extraction.
+  - Default in this repo: `deepseek-v3.1:671b-cloud`
+  - Alternative option: `mistral`
+- `spring.ai.ollama.embedding.options.model` (default `nomic-embed-text`)
+- `spring.ai.vectorstore.pgvector.*` (index type, distance type, dimensions)
+
+### Switching between DeepSeek and Mistral
+
+You can run either model as the chat LLM:
+- **DeepSeek** (`deepseek-v3.1:671b-cloud`) is currently the default.
+- **Mistral** (`mistral`) is a lighter/faster fallback.
+
+To switch in Docker, set the env var for the app container:
 ```bash
-curl -X POST http://localhost:8080/api/lectures/{lecture-id}/process
+export SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL='mistral'
 ```
 
-### Get recommended problems
-```bash
-curl http://localhost:8080/api/lectures/{lecture-id}/problems
-```
-
-## Configuration
-All settings can be adjusted in `application.properties` or via environment variables:
-- `spring.datasource.url=jdbc:postgresql://localhost:5432/mydatabase`  
-- `spring.datasource.username=myuser` / `spring.datasource.password=secret`  
-- `spring.ai.ollama.base-url=http://localhost:11434`  
+To switch for local development, update `src/main/resources/application.properties`:
 - `spring.ai.ollama.chat.options.model=mistral`
-- `spring.ai.ollama.embedding.options.model=nomic-embed-text`
-- `spring.ai.vectorstore.pgvector.*` for pgvector config.
 
-## Full-stack roadmap (UI)
-- Minimal web UI (Thymeleaf/React) to upload audio/text, show themes, and problem recommendations.  
-- Progress indicators for transcription/ingestion jobs.  
-- Result views: themed problem sets, download as PDF/HTML, shareable links.  
-- Admin panel: dataset ingest status, model versions, and health dashboards.
+Important: if you change the embedding model/dimensions, you must reindex the vector store.
+
+## Next implementation (planned features)
+
+These are **not implemented yet** — they’re the next features to build on top of the current system.
+
+### 1) Periodic screenshots from lecture video → chunk context
+
+When the user uploads a lecture video, take screenshots every **X minutes** (configurable), attach them to the corresponding transcript chunks, and include them in retrieval context.
+
+
+### 2) LLM-generated “similar tasks” from retrieved problems
+
+After similarity search returns candidate problems from the vector database, allow the user to pick which ones are relevant, then have an LLM propose **new, similar tasks** (matching the lecture style/difficulty).
+
 
 ## Testing strategy
 - Unit tests: chunker, theme extractor prompt formatting, repository queries.  
