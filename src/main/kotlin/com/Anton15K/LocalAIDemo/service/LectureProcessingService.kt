@@ -240,19 +240,9 @@ class LectureProcessingService(
         logger.info("Deleted lecture: $lectureId")
     }
 
-    private fun parseKeywords(keywordsJson: String?): List<String> {
-        if (keywordsJson.isNullOrBlank()) return emptyList()
-        return try {
-            // Simple JSON array parsing
-            keywordsJson.trim('[', ']').split(",").map { it.trim().trim('"') }.filter {
-                it.isNotBlank()
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
+    
 
-    /** Extract themes from individual chunks, then aggregate. */
+    // Extract themes from chunks using chunk-level extraction and aggregation
     private fun extractThemesFromChunks(
             chunks: List<TextChunk>,
             tuning: ThemeExtractionTuningService.TunedThemeExtractionSettings
