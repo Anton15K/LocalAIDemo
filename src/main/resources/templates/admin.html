@@ -4,19 +4,19 @@
 <body>
 <div th:fragment="content">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Admin</h1>
-        <p class="mt-2 text-gray-600">Vector store and DeepMath ingestion controls</p>
+        <h1 class="text-3xl font-bold" style="color: var(--text)">Admin</h1>
+        <p class="mt-2" style="color: var(--muted)">Vector store and DeepMath ingestion controls</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Vector Store -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="ai-surface rounded-lg p-6">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-900">Vector Store</h2>
-                <span id="vs-running" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">unknown</span>
+                <h2 class="text-xl font-semibold" style="color: var(--text)">Vector Store</h2>
+                <span id="vs-running" class="text-xs px-2 py-1 rounded status-processing">unknown</span>
             </div>
 
-            <div class="mt-4 text-sm text-gray-700 space-y-1">
+            <div class="mt-4 text-sm space-y-1" style="color: var(--muted)">
                 <div>Rows: <span id="vs-rows" class="font-medium">-</span></div>
                 <div>Total problems: <span id="vs-total" class="font-medium">-</span></div>
                 <div>Indexed: <span id="vs-indexed" class="font-medium">-</span></div>
@@ -25,41 +25,45 @@
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Batch size</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Batch size</label>
                     <input id="vs-batch" type="number" value="200" min="1" max="2000"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Delay (ms)</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Delay (ms)</label>
                     <input id="vs-delay" type="number" value="0" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
             </div>
 
             <div class="mt-6 flex gap-3">
                 <button id="vs-reindex"
-                        class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                        class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition ring-1 ring-white/10 ai-glow"
+                        style="background: rgba(56,189,248,0.16); color: var(--text)">
                     Reindex problems
                 </button>
                 <button id="vs-clear"
-                        class="inline-flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-900 text-sm font-medium hover:bg-gray-300">
+                        class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition ring-1 ring-white/10 hover:bg-white/5"
+                        style="color: var(--text)">
                     Clear vector store
                 </button>
             </div>
 
-            <p class="mt-4 text-xs text-gray-500">
+            <p class="mt-4 text-xs" style="color: var(--muted)">
                 Reindexing truncates <span class="font-medium">vector_store</span> and rebuilds embeddings.
             </p>
         </div>
 
         <!-- DeepMath ingestion -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="ai-surface rounded-lg p-6">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-900">DeepMath Ingestion</h2>
-                <span id="dm-running" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">unknown</span>
+                <h2 class="text-xl font-semibold" style="color: var(--text)">DeepMath Ingestion</h2>
+                <span id="dm-running" class="text-xs px-2 py-1 rounded status-processing">unknown</span>
             </div>
 
-            <div class="mt-4 text-sm text-gray-700 space-y-1">
+            <div class="mt-4 text-sm space-y-1" style="color: var(--muted)">
                 <div>Dataset: <span id="dm-dataset" class="font-medium">-</span></div>
                 <div>Split: <span id="dm-split" class="font-medium">-</span></div>
                 <div>Progress: <span id="dm-progress" class="font-medium">-</span></div>
@@ -69,61 +73,70 @@
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Dataset</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Dataset</label>
                     <input id="dm-dataset-input" type="text" value="zwhe99/DeepMath-103K"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Split</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Split</label>
                     <input id="dm-split-input" type="text" value="train"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Config</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Config</label>
                     <input id="dm-config-input" type="text" value="default"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Batch size (<=100)</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Batch size (<=100)</label>
                     <input id="dm-batch" type="number" value="100" min="1" max="100"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Max rows (0=all)</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Max rows (0=all)</label>
                     <input id="dm-maxrows" type="number" value="0" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Request delay (ms)</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Request delay (ms)</label>
                     <input id="dm-reqdelay" type="number" value="250" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div class="sm:col-span-2">
-                    <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <input id="dm-index" type="checkbox" class="rounded border-gray-300" />
+                    <label class="inline-flex items-center gap-2 text-sm font-medium" style="color: var(--text)">
+                        <input id="dm-index" type="checkbox" class="rounded" style="border-color: var(--border)" />
                         Index embeddings while ingesting
                     </label>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Index chunk size</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Index chunk size</label>
                     <input id="dm-index-chunk" type="number" value="100" min="1"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Index delay (ms)</label>
+                    <label class="block text-sm font-medium" style="color: var(--text)">Index delay (ms)</label>
                     <input id="dm-index-delay" type="number" value="200" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                           class="mt-1 block w-full rounded-md border p-2"
+                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)" />
                 </div>
             </div>
 
             <div class="mt-6">
                 <button id="dm-start"
-                        class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                        class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition ring-1 ring-white/10 ai-glow"
+                        style="background: rgba(167,139,250,0.18); color: var(--text)">
                     Start ingestion
                 </button>
             </div>
 
-            <p class="mt-4 text-xs text-gray-500">
+            <p class="mt-4 text-xs" style="color: var(--muted)">
                 Uses Hugging Face datasets-server paging (length capped to 100).
             </p>
         </div>
@@ -137,7 +150,7 @@
 
         function setPill(el, running) {
             el.textContent = running ? 'running' : 'idle';
-            el.className = 'text-xs px-2 py-1 rounded ' + (running ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800');
+            el.className = 'text-xs px-2 py-1 rounded ' + (running ? 'status-processing' : 'status-completed');
         }
 
         async function refreshVectorStore() {

@@ -5,7 +5,7 @@
 <div th:fragment="content">
     <!-- Back Button -->
     <div class="mb-6">
-        <a href="/problems" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+        <a href="/problems" class="inline-flex items-center ai-accent hover:opacity-90">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -14,9 +14,9 @@
     </div>
 
     <!-- Problem Card -->
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div class="ai-surface rounded-lg overflow-hidden ai-glow">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+        <div class="p-6 text-white" style="background: linear-gradient(90deg, rgba(56,189,248,0.22), rgba(167,139,250,0.22)); border-bottom: 1px solid var(--border)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium" th:text="${problem.topic}">Algebra</span>
@@ -40,60 +40,90 @@
         </div>
 
         <!-- Problem Statement -->
-        <div class="p-6 border-b">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Problem Statement</h2>
+        <div class="p-6" style="border-bottom: 1px solid var(--border)">
+            <h2 class="text-lg font-semibold mb-4" style="color: var(--text)">Problem Statement</h2>
             <div class="prose prose-indigo max-w-none">
-                <p class="text-gray-700 whitespace-pre-wrap" th:text="${problem.statement}">
+                <!-- Use a single block container so MathJax can typeset across line breaks -->
+                <div class="whitespace-pre-wrap" style="color: var(--text)" th:text="${problem.statement}">
                     Problem statement goes here...
-                </p>
+                </div>
             </div>
         </div>
 
         <!-- Solution Section (Collapsible) -->
         <div class="p-6" x-data="{ showSolution: false }">
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900">Solution</h2>
-                <button @click="showSolution = !showSolution; if (showSolution) { $nextTick(() => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(); }); }" 
-                        class="px-4 py-2 text-sm font-medium rounded-md transition"
-                        :class="showSolution ? 'bg-gray-200 text-gray-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
+                <h2 class="text-lg font-semibold" style="color: var(--text)">Solution</h2>
+                <button
+                        @click="showSolution = !showSolution; if (showSolution) { $nextTick(() => { if (window.typesetMath) window.typesetMath(); else if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise(); }); }"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition ring-1 ring-white/10"
+                        :class="showSolution ? 'bg-white/5 text-white/80 hover:bg-white/10' : 'bg-sky-400/15 text-sky-200 hover:bg-sky-400/20'">
                     <span x-show="!showSolution">Show Solution</span>
                     <span x-show="showSolution">Hide Solution</span>
                 </button>
             </div>
             <div x-show="showSolution" x-transition class="mt-4">
-                <div class="bg-gray-50 rounded-lg p-6">
+                <div class="ai-surface-solid rounded-lg p-6">
                     <div th:if="${problem.solution}" class="prose prose-indigo max-w-none">
-                        <p class="text-gray-700 whitespace-pre-wrap" th:text="${problem.solution}">
+                        <div class="whitespace-pre-wrap" style="color: var(--text)" th:text="${problem.solution}">
                             Solution goes here...
-                        </p>
+                        </div>
                     </div>
-                    <p th:unless="${problem.solution}" class="text-gray-500 italic">
+                    <p th:unless="${problem.solution}" class="italic" style="color: var(--muted)">
                         No solution available for this problem.
                     </p>
                 </div>
-                <div th:if="${problem.answer}" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <span class="text-sm font-medium text-green-800">Answer: </span>
-                    <span class="text-green-700 font-mono" th:text="${problem.answer}">42</span>
+                <div th:if="${problem.answer}" class="mt-4 p-4 rounded-lg" style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.20)">
+                    <span class="text-sm font-medium" style="color: var(--text)">Answer: </span>
+                    <span class="font-mono" style="color: var(--neon-blue)" th:text="${problem.answer}">42</span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Note: we intentionally don't render a separate "Answer" field here.
+         The backend `Problem` entity currently includes `statement` and optional `solution`, but no `answer` property.
+         If we later add an `answer` column + field, we can reintroduce an Answer box. -->
+
     <!-- Related Problems (if available) -->
     <div th:if="${not #lists.isEmpty(relatedProblems)}" class="mt-8">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Related Problems</h2>
+        <h2 class="text-xl font-bold mb-4" style="color: var(--text)">Related Problems</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <a th:each="related : ${relatedProblems}" 
                th:href="@{/problems/{id}(id=${related.id})}"
-               class="bg-white rounded-lg shadow p-4 hover:shadow-md transition">
-                <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium" 
+               class="ai-surface rounded-lg p-4 transition ai-glow">
+                <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)"
                       th:text="${related.topic}">Topic</span>
-                <p class="mt-2 text-sm text-gray-700 line-clamp-3" th:text="${related.statement}">
+                <p class="mt-2 text-sm line-clamp-3" style="color: var(--muted)" th:text="${related.statement}">
                     Related problem statement...
                 </p>
             </a>
         </div>
     </div>
+
+    <!-- Ensure MathJax typesets even if the page loads before MathJax finishes initializing -->
+    <script th:inline="none">
+        (function () {
+            const tryTypeset = () => {
+                if (window.typesetMath) return window.typesetMath();
+                if (window.MathJax?.typesetPromise) return window.MathJax.typesetPromise();
+            };
+
+            // Run immediately (best-effort) and then retry a few times in case MathJax loads late.
+            tryTypeset();
+            let left = 10;
+            const id = setInterval(() => {
+                left -= 1;
+                const done = !!window.MathJax?.typesetPromise;
+                if (done) {
+                    tryTypeset();
+                    clearInterval(id);
+                } else if (left <= 0) {
+                    clearInterval(id);
+                }
+            }, 250);
+        })();
+    </script>
 </div>
 </body>
 </html>

@@ -4,6 +4,7 @@ import com.Anton15K.LocalAIDemo.repository.LectureRepository
 import com.Anton15K.LocalAIDemo.repository.ProblemRepository
 import com.Anton15K.LocalAIDemo.repository.ThemeRepository
 import com.Anton15K.LocalAIDemo.service.LectureProcessingService
+import com.Anton15K.LocalAIDemo.service.ProblemRetrievalService
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Controller
@@ -21,8 +22,18 @@ class WebController(
     private val lectureRepository: LectureRepository,
     private val problemRepository: ProblemRepository,
     private val themeRepository: ThemeRepository,
-    private val lectureProcessingService: LectureProcessingService
+    private val lectureProcessingService: LectureProcessingService,
+    private val problemRetrievalService: ProblemRetrievalService
 ) {
+
+    private fun populateLandingCounts(model: Model) {
+        model.addAttribute("lectureCount", lectureRepository.count())
+        model.addAttribute("problemCount", problemRepository.count())
+        model.addAttribute("themeCount", themeRepository.count())
+    }
+
+    @GetMapping("/landing")
+    fun landingAlias(): String = "redirect:/"
 
     @GetMapping("/admin")
     fun admin(): String {
@@ -30,20 +41,27 @@ class WebController(
     }
 
     @GetMapping("/")
-    fun home(model: Model): String {
+    fun landing(model: Model): String {
+        populateLandingCounts(model)
+        return "landing"
+    }
+
+    @GetMapping("/dashboard")
+    fun dashboard(model: Model): String {
         val lectureCount = lectureRepository.count()
         val problemCount = problemRepository.count()
-        val themeCount = themeRepository.count()
-        
+        val topics = problemRepository.findDistinctTopics()
+
         val recentLectures = lectureRepository.findAll(
             PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).content
-        
+
         model.addAttribute("lectureCount", lectureCount)
         model.addAttribute("problemCount", problemCount)
-        model.addAttribute("themeCount", themeCount)
+        model.addAttribute("topicCount", topics.size)
+        model.addAttribute("topics", topics)
         model.addAttribute("recentLectures", recentLectures)
-        
+
         return "home"
     }
 
@@ -260,9 +278,33 @@ class WebController(
     }
 
     @GetMapping("/problems/{id}")
-    fun problemDetail(@PathVariable id: UUID, model: Model): String {
-        val problem = problemRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Problem not found with id: $id") }
+    fun problemDetail(
+        @PathVariable id: String,
+        model: Model
+    ): String {
+        // Some problems may be referenced before they are indexed in the vector store.
+        // The UI should still be able to open them as long as they're present in the DB.
+        val problem = run {
+            val asUuid = try {
+                UUID.fromString(id)
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+
+            if (asUuid != null) {
+                problemRepository.findById(asUuid).orElse(null)
+            } else {
+                // Fallback: allow opening a problem by sourceId-like slug.
+                problemRepository.findBySourceId(id)
+            }
+        } ?: throw NoSuchElementException("Problem not found with id: $id")
+
+        // Best-effort indexing to reduce future retrieval misses.
+        try {
+            problemRetrievalService.indexProblem(problem)
+        } catch (_: Exception) {
+            // Ignore: vector store might be unavailable; UI should still work.
+        }
         
         // Get related problems from the same topic
         val relatedProblems = problemRepository.findByTopic(
@@ -270,7 +312,7 @@ class WebController(
             PageRequest.of(0, 6)
         ).content.filter { it.id != problem.id }.take(3)
         
-        model.addAttribute("problem", problem)
+    model.addAttribute("problem", problem)
         model.addAttribute("relatedProblems", relatedProblems)
         
         return "problems/detail"

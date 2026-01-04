@@ -7,15 +7,15 @@
     <div class="mb-8">
         <nav class="flex mb-4" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2">
-                <li><a href="/lectures" class="text-gray-500 hover:text-gray-700">Lectures</a></li>
+                <li><a href="/lectures" style="color: var(--muted)" class="hover:opacity-90">Lectures</a></li>
                 <li><span class="text-gray-400">/</span></li>
-                <li class="text-gray-900 font-medium" th:text="${lecture.title}">Lecture</li>
+                <li class="font-medium" style="color: var(--text)" th:text="${lecture.title}">Lecture</li>
             </ol>
         </nav>
         <div class="flex justify-between items-start">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900" th:text="${lecture.title}">Lecture Title</h1>
-                <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                <h1 class="text-3xl font-bold" style="color: var(--text)" th:text="${lecture.title}">Lecture Title</h1>
+                <div class="mt-2 flex items-center space-x-4 text-sm" style="color: var(--muted)">
                     <span th:text="${#temporals.format(lecture.createdAt, 'MMMM d, yyyy ''at'' HH:mm')}">Date</span>
                     <span th:if="${lecture.uploadedBy}" th:text="'by ' + ${lecture.uploadedBy}">by User</span>
                 </div>
@@ -34,14 +34,14 @@
     </div>
 
     <!-- Error Message -->
-    <div th:if="${lecture.errorMessage}" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+    <div th:if="${lecture.errorMessage}" class="mb-6 p-4 rounded-lg" style="background: rgba(248, 113, 113, 0.10); border: 1px solid rgba(248, 113, 113, 0.25)">
         <div class="flex">
             <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Processing Error</h3>
-                <p class="mt-1 text-sm text-red-700" th:text="${lecture.errorMessage}">Error message</p>
+                <h3 class="text-sm font-medium" style="color: #fca5a5">Processing Error</h3>
+                <p class="mt-1 text-sm" style="color: rgba(252,165,165,0.9)" th:text="${lecture.errorMessage}">Error message</p>
             </div>
         </div>
     </div>
@@ -50,11 +50,11 @@
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Extracted Themes -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="px-6 py-4 border-b bg-gray-50">
-                    <h2 class="text-xl font-semibold text-gray-900">Extracted Themes</h2>
+            <div class="ai-surface rounded-lg overflow-hidden">
+                <div class="px-6 py-4" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+                    <h2 class="text-xl font-semibold" style="color: var(--text)">Extracted Themes</h2>
                 </div>
-                <div th:if="${#lists.isEmpty(themes)}" class="p-6 text-center text-gray-500">
+                <div th:if="${#lists.isEmpty(themes)}" class="p-6 text-center" style="color: var(--muted)">
                     <p th:if="${lecture.status.toString() == 'PENDING'}">
                         Click "Analyze Now" to extract themes from this lecture.
                     </p>
@@ -69,16 +69,18 @@
                     <div th:each="theme : ${themes}" class="p-4">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <h3 class="font-medium text-gray-900" th:text="${theme.name}">Theme Name</h3>
-                                <p th:if="${theme.summary}" class="mt-1 text-sm text-gray-600" th:text="${theme.summary}">Summary</p>
+                                <h3 class="font-medium" style="color: var(--text)" th:text="${theme.name}">Theme Name</h3>
+                                <p th:if="${theme.summary}" class="mt-1 text-sm" style="color: var(--muted)" th:text="${theme.summary}">Summary</p>
                                 <!-- Keywords removed: Theme entity no longer includes keywords -->
                             </div>
                             <div class="ml-4 flex items-center space-x-2">
                                 <span th:if="${theme.mappedTopic}" 
-                                      class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
+                                      class="px-2 py-1 rounded-full text-xs font-medium"
+                                      style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)"
                                       th:text="${theme.mappedTopic}">Topic</span>
                                 <span th:if="${theme.confidence}" 
-                                      class="text-sm text-gray-400"
+                                      class="text-sm"
+                                      style="color: rgba(229,231,235,0.45)"
                                       th:text="${#numbers.formatDecimal(theme.confidence * 100, 0, 0)} + '%'">95%</span>
                             </div>
                         </div>
@@ -87,16 +89,16 @@
             </div>
 
             <!-- Transcript -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-900">Transcript</h2>
+            <div class="ai-surface rounded-lg overflow-hidden">
+                <div class="px-6 py-4 flex justify-between items-center" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+                    <h2 class="text-xl font-semibold" style="color: var(--text)">Transcript</h2>
                     <button onclick="document.getElementById('transcript-content').classList.toggle('line-clamp-none')"
-                            class="text-sm text-indigo-600 hover:text-indigo-800">
+                            class="text-sm ai-accent hover:opacity-90">
                         Toggle Full Text
                     </button>
                 </div>
                 <div class="p-6">
-                    <p id="transcript-content" class="text-gray-700 whitespace-pre-wrap line-clamp-[20]" 
+                    <p id="transcript-content" class="whitespace-pre-wrap line-clamp-[20]" style="color: var(--text)"
                        th:text="${lecture.transcript}">Transcript content...</p>
                 </div>
             </div>
@@ -104,11 +106,11 @@
 
         <!-- Sidebar - Recommended Problems -->
         <div class="space-y-6">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="px-6 py-4 border-b bg-gray-50">
-                    <h2 class="text-xl font-semibold text-gray-900">Recommended Problems</h2>
+            <div class="ai-surface rounded-lg overflow-hidden">
+                <div class="px-6 py-4" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+                    <h2 class="text-xl font-semibold" style="color: var(--text)">Recommended Problems</h2>
                 </div>
-                <div th:if="${#lists.isEmpty(problems.content)}" class="p-6 text-center text-gray-500">
+                <div th:if="${#lists.isEmpty(problems.content)}" class="p-6 text-center" style="color: var(--muted)">
                     <p th:if="${lecture.status.toString() != 'COMPLETED'}">
                         Analyze the lecture to get problem recommendations.
                     </p>
@@ -117,48 +119,49 @@
                     </p>
                 </div>
                 <div th:unless="${#lists.isEmpty(problems.content)}" class="divide-y max-h-[600px] overflow-y-auto">
-                    <div th:each="result : ${problems.content}" class="p-4 hover:bg-gray-50">
+                    <div th:each="result : ${problems.content}" class="p-4 transition" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <p class="text-sm text-gray-900 line-clamp-3" th:text="${result.problem.statement}">Problem statement...</p>
+                                <p class="text-sm line-clamp-3" style="color: var(--text)" th:text="${result.problem.statement}">Problem statement...</p>
                                 <div class="mt-2 flex items-center space-x-2">
-                                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded text-xs" 
+                                    <span class="px-2 py-0.5 rounded text-xs" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)"
                                           th:text="${result.problem.topic}">Topic</span>
                                     <span th:if="${result.problem.difficulty}" 
-                                          class="text-xs text-gray-400"
+                                          class="text-xs"
+                                          style="color: rgba(229,231,235,0.45)"
                                           th:text="'Level ' + ${result.problem.difficulty}">Level 1</span>
                                 </div>
                             </div>
-                            <span class="ml-2 text-xs text-gray-400" 
+                            <span class="ml-2 text-xs" style="color: rgba(229,231,235,0.45)"
                                   th:text="${#numbers.formatDecimal(result.score * 100, 0, 0)} + '%'">85%</span>
                         </div>
                         <a th:href="@{/problems/{id}(id=${result.problem.id})}" 
-                           class="mt-2 inline-block text-sm text-indigo-600 hover:text-indigo-800">
+                           class="mt-2 inline-block text-sm ai-accent hover:opacity-90">
                             View Solution →
                         </a>
                     </div>
                 </div>
-                <div th:if="${problems.totalElements > 10}" class="px-6 py-3 bg-gray-50 border-t">
+                <div th:if="${problems.totalElements > 10}" class="px-6 py-3" style="border-top: 1px solid var(--border); background: rgba(255,255,255,0.03)">
                     <a th:href="@{/lectures/{id}/problems(id=${lecture.id})}" 
-                       class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                       class="ai-accent hover:opacity-90 text-sm font-medium">
                         <span th:text="'View all ' + ${problems.totalElements} + ' problems →'">View all problems →</span>
                     </a>
                 </div>
             </div>
 
             <!-- Actions Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="font-medium text-gray-900 mb-4">Actions</h3>
+            <div class="ai-surface rounded-lg p-6">
+                <h3 class="font-medium mb-4" style="color: var(--text)">Actions</h3>
                 <div class="space-y-3">
                     <form th:if="${lecture.status.toString() == 'COMPLETED'}" 
                           th:action="@{/lectures/{id}/process(id=${lecture.id})}" method="post">
-                        <button type="submit" class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition text-sm">
+                        <button type="submit" class="w-full px-4 py-2 rounded-md transition text-sm ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">
                             Re-analyze Lecture
                         </button>
                     </form>
                     <form th:action="@{/lectures/{id}/delete(id=${lecture.id})}" method="post"
                           onsubmit="return confirm('Are you sure you want to delete this lecture?')">
-                        <button type="submit" class="w-full px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition text-sm">
+                        <button type="submit" class="w-full px-4 py-2 rounded-md transition text-sm ring-1 ring-white/10" style="background: rgba(248,113,113,0.10); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.25)">
                             Delete Lecture
                         </button>
                     </form>

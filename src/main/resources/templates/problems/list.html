@@ -6,8 +6,8 @@
     <!-- Page Header -->
     <div class="flex justify-between items-center mb-8">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Math Problems</h1>
-            <p class="mt-2 text-gray-600">Browse and search problems from the MATH dataset</p>
+            <h1 class="text-3xl font-bold" style="color: var(--text)">Math Problems</h1>
+            <p class="mt-2" style="color: var(--muted)">Browse and search problems from the MATH dataset</p>
         </div>
         <form action="/api/problems/sample" method="post" th:if="${problemCount == 0}">
             <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
@@ -17,27 +17,27 @@
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="ai-surface rounded-lg p-4 mb-6">
         <form action="/problems" method="get" class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
-                <label for="topic" class="block text-sm font-medium text-gray-700">Topic</label>
-                <select id="topic" name="topic" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+                <label for="topic" class="block text-sm font-medium" style="color: var(--text)">Topic</label>
+                <select id="topic" name="topic" class="mt-1 block w-full rounded-md border p-2" style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)">
                     <option value="">All Topics</option>
                     <option th:each="t : ${topics}" th:value="${t}" th:text="${t}" th:selected="${t == selectedTopic}">Topic</option>
                 </select>
             </div>
             <div class="flex-1 min-w-[200px]">
-                <label for="difficulty" class="block text-sm font-medium text-gray-700">Difficulty</label>
-                <select id="difficulty" name="difficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+                <label for="difficulty" class="block text-sm font-medium" style="color: var(--text)">Difficulty</label>
+                <select id="difficulty" name="difficulty" class="mt-1 block w-full rounded-md border p-2" style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)">
                     <option value="">All Levels</option>
                     <option th:each="i : ${#numbers.sequence(1,5)}" th:value="${i}" th:text="'Level ' + ${i}" th:selected="${i == selectedDifficulty}">Level</option>
                 </select>
             </div>
             <div>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                <button type="submit" class="px-4 py-2 rounded-md transition ring-1 ring-white/10 ai-glow" style="background: rgba(56,189,248,0.16); color: var(--text)">
                     Filter
                 </button>
-                <a href="/problems" class="ml-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+                <a href="/problems" class="ml-2 px-4 py-2 rounded-md transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">
                     Clear
                 </a>
             </div>
@@ -48,14 +48,14 @@
     <div th:if="${not #lists.isEmpty(topics)}" class="mb-6">
         <div class="flex flex-wrap gap-2">
             <a href="/problems" 
-               th:classappend="${selectedTopic == null} ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+               th:classappend="${selectedTopic == null} ? 'bg-sky-400/20 text-sky-200 ring-1 ring-sky-300/20' : 'bg-white/5 text-white/80 ring-1 ring-white/10 hover:bg-white/10'"
                class="px-3 py-1 rounded-full text-sm font-medium transition">
                 All
             </a>
             <a th:each="t : ${topics}" 
                th:href="@{/problems(topic=${t})}"
                th:text="${t}"
-               th:classappend="${t == selectedTopic} ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+               th:classappend="${t == selectedTopic} ? 'bg-sky-400/20 text-sky-200 ring-1 ring-sky-300/20' : 'bg-white/5 text-white/80 ring-1 ring-white/10 hover:bg-white/10'"
                class="px-3 py-1 rounded-full text-sm font-medium transition">
                 Topic
             </a>
@@ -63,12 +63,12 @@
     </div>
 
     <!-- Problems Grid -->
-    <div th:if="${#lists.isEmpty(problems.content)}" class="bg-white rounded-lg shadow p-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div th:if="${#lists.isEmpty(problems.content)}" class="ai-surface rounded-lg p-12 text-center">
+        <svg class="mx-auto h-12 w-12" style="color: rgba(229,231,235,0.45)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No problems found</h3>
-        <p class="mt-1 text-sm text-gray-500">
+        <h3 class="mt-2 text-sm font-medium" style="color: var(--text)">No problems found</h3>
+        <p class="mt-1 text-sm" style="color: var(--muted)">
             <span th:if="${selectedTopic != null || selectedDifficulty != null}">Try adjusting your filters.</span>
             <span th:unless="${selectedTopic != null || selectedDifficulty != null}">Load sample problems to get started.</span>
         </p>
@@ -76,23 +76,23 @@
 
     <div th:unless="${#lists.isEmpty(problems.content)}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div th:each="problem : ${problems.content}" 
-             class="bg-white rounded-lg shadow-lg overflow-hidden card-hover transition-all duration-200">
+             class="ai-surface rounded-lg overflow-hidden card-hover transition-all duration-200">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium" 
+                    <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)" 
                           th:text="${problem.topic}">Topic</span>
                     <span th:if="${problem.difficulty}" 
-                          class="text-sm text-gray-400"
+                          class="text-sm" style="color: rgba(229,231,235,0.45)"
                           th:text="'Level ' + ${problem.difficulty}">Level 1</span>
                 </div>
-                <p class="text-gray-900 line-clamp-4" th:text="${problem.statement}">Problem statement...</p>
+                <p class="line-clamp-4" style="color: var(--text)" th:text="${problem.statement}">Problem statement...</p>
                 <div th:if="${problem.subtopic}" class="mt-2">
-                    <span class="text-xs text-gray-500" th:text="${problem.subtopic}">Subtopic</span>
+                    <span class="text-xs" style="color: var(--muted)" th:text="${problem.subtopic}">Subtopic</span>
                 </div>
             </div>
-            <div class="px-6 py-3 bg-gray-50 border-t">
+            <div class="px-6 py-3" style="border-top: 1px solid var(--border); background: rgba(255,255,255,0.03)">
                 <a th:href="@{/problems/{id}(id=${problem.id})}" 
-                   class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                   class="ai-accent hover:opacity-90 text-sm font-medium">
                     View Solution →
                 </a>
             </div>
@@ -101,7 +101,7 @@
 
     <!-- Pagination -->
     <div th:if="${problems.totalPages > 1}" class="mt-8 flex items-center justify-between">
-        <div class="text-sm text-gray-700">
+        <div class="text-sm" style="color: var(--muted)">
             Showing <span th:text="${problems.number * problems.size + 1}">1</span> to 
             <span th:text="${problems.number * problems.size + problems.numberOfElements}">10</span> of 
             <span th:text="${problems.totalElements}">100</span> problems
@@ -109,13 +109,13 @@
         <div class="flex space-x-2">
             <a th:unless="${problems.first}" 
                th:href="@{/problems(page=${problems.number - 1}, topic=${selectedTopic}, difficulty=${selectedDifficulty})}"
-               class="px-4 py-2 border rounded-md text-sm hover:bg-gray-100 transition">Previous</a>
-            <span class="px-4 py-2 text-sm text-gray-500">
+               class="px-4 py-2 rounded-md text-sm transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">Previous</a>
+            <span class="px-4 py-2 text-sm" style="color: var(--muted)">
                 Page <span th:text="${problems.number + 1}">1</span> of <span th:text="${problems.totalPages}">10</span>
             </span>
             <a th:unless="${problems.last}" 
                th:href="@{/problems(page=${problems.number + 1}, topic=${selectedTopic}, difficulty=${selectedDifficulty})}"
-               class="px-4 py-2 border rounded-md text-sm hover:bg-gray-100 transition">Next</a>
+               class="px-4 py-2 rounded-md text-sm transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">Next</a>
         </div>
     </div>
 </div>
