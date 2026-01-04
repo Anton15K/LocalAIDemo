@@ -25,6 +25,7 @@ class LectureProcessingService(
         private val topicMappingService: TopicMappingService,
         private val problemRetrievalService: ProblemRetrievalService,
         private val assemblyAiService: AssemblyAiService,
+        private val lectureSummarizationService: LectureSummarizationService,
         @org.springframework.beans.factory.annotation.Value(
                 "\${app.theme-extraction.chunk-level-enabled:true}"
         )
@@ -171,13 +172,19 @@ class LectureProcessingService(
                     themeExtractionService.toThemeEntities(extractedThemes, processingLecture)
             themeRepository.saveAll(themeEntities)
 
-            // 3. Update lecture status to completed
-            val completedLecture =
-                    processingLecture.copy(
-                            status = LectureStatus.COMPLETED,
-                            updatedAt = Instant.now()
-                    )
-            return lectureRepository.save(completedLecture)
+            // 3. Generate structured notes (summarization)
+            logger.info("Generating structured notes for lecture: ${lecture.id}")
+            val structuredNotes = lectureSummarizationService.generateStructuredNotes(lecture.transcript!!)
+
+            // 4. Update lecture status to completed
+            val finalLecture = processingLecture.copy(
+                status = LectureStatus.COMPLETED,
+                structuredContent = structuredNotes,
+                updatedAt = Instant.now()
+            )
+            val savedLecture = lectureRepository.save(finalLecture)
+            logger.info("Lecture processing completed for: ${savedLecture.id}. Structured content length: ${savedLecture.structuredContent?.length ?: 0}")
+            return savedLecture
         } catch (e: Exception) {
             logger.error("Failed to process lecture ${lecture.id}: ${e.message}", e)
             val failedLecture =

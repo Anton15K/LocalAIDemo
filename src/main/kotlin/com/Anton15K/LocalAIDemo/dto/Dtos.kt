@@ -34,6 +34,7 @@ data class LectureDetailResponse(
     val source: String?,
     val uploadedBy: String?,
     val errorMessage: String?,
+    val structuredContent: String?,
     val createdAt: Instant,
     val updatedAt: Instant,
     val themes: List<ThemeResponse> = emptyList()

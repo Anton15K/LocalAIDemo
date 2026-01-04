@@ -46,6 +46,9 @@ data class Lecture(
     @Column(name = "error_message", columnDefinition = "TEXT")
     val errorMessage: String? = null,
 
+    @Column(name = "structured_content", columnDefinition = "TEXT")
+    val structuredContent: String? = null,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),
 

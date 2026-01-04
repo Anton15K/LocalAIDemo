@@ -49,6 +49,18 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
+            <!-- Structured Study Notes -->
+            <div th:if="${lecture.structuredContent}" class="ai-surface rounded-lg overflow-hidden">
+                <div class="px-6 py-4" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+                    <h2 class="text-xl font-semibold" style="color: var(--text)">Structured Study Notes</h2>
+                </div>
+                <!-- Hidden raw content to avoid attribute encoding issues -->
+                <div id="structured-content-raw" style="display: none" th:if="${lecture.structuredContent}" th:text="${lecture.structuredContent}"></div>
+                <div class="p-6 prose max-w-none" id="structured-content" style="color: var(--text)">
+                    <p class="text-sm italic" style="color: var(--muted)">Loading structured notes...</p>
+                </div>
+            </div>
+
             <!-- Extracted Themes -->
             <div class="ai-surface rounded-lg overflow-hidden">
                 <div class="px-6 py-4" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
@@ -88,18 +100,22 @@
                 </div>
             </div>
 
-            <!-- Transcript -->
-            <div class="ai-surface rounded-lg overflow-hidden">
+            <!-- Transcript (Now secondary to Structured Notes) -->
+            <div class="ai-surface rounded-lg overflow-hidden" x-data="{ open: false }">
                 <div class="px-6 py-4 flex justify-between items-center" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
-                    <h2 class="text-xl font-semibold" style="color: var(--text)">Transcript</h2>
-                    <button onclick="document.getElementById('transcript-content').classList.toggle('line-clamp-none')"
+                    <h2 class="text-xl font-semibold" style="color: var(--text)">Raw Transcript</h2>
+                    <button @click="open = !open"
                             class="text-sm ai-accent hover:opacity-90">
-                        Toggle Full Text
+                        <span x-text="open ? 'Hide Full Text' : 'Show Full Text'">Show Full Text</span>
                     </button>
                 </div>
-                <div class="p-6">
-                    <p id="transcript-content" class="whitespace-pre-wrap line-clamp-[20]" style="color: var(--text)"
+                <div class="p-6" x-show="open" x-cloak>
+                    <p id="transcript-content" class="whitespace-pre-wrap" style="color: var(--text)"
                        th:text="${lecture.transcript}">Transcript content...</p>
+                </div>
+                <div class="p-6 text-sm" style="color: var(--muted)" x-show="!open">
+                    <p class="line-clamp-2" th:text="${lecture.transcript}">Transcript preview...</p>
+                    <button @click="open = true" class="mt-2 ai-accent hover:underline">Show more</button>
                 </div>
             </div>
         </div>
@@ -169,6 +185,66 @@
             </div>
         </div>
     </div>
+    <script th:inline="javascript">
+        (function() {
+            function renderNotes() {
+                console.log('Structured content render function triggered');
+                const contentEl = document.getElementById('structured-content');
+                const rawEl = document.getElementById('structured-content-raw');
+                
+                if (!contentEl) {
+                    console.error('structured-content element not found');
+                    return;
+                }
+
+                if (!rawEl) {
+                    console.warn('structured-content-raw element not found');
+                    if (contentEl.innerHTML.includes('Loading structured notes...')) {
+                        contentEl.innerHTML = '<p class="text-sm italic" style="color: var(--muted)">No structured notes available for this lecture.</p>';
+                    }
+                    return;
+                }
+
+                const content = rawEl.textContent;
+                console.log('Raw content length:', content ? content.length : 0);
+                
+                if (content && content.trim().length > 0) {
+                    try {
+                        // Parse Markdown using marked.js
+                        if (window.marked && window.marked.parse) {
+                            contentEl.innerHTML = window.marked.parse(content);
+                            console.log('Markdown parsed successfully');
+                        } else {
+                            console.warn('marked.js not found, falling back to plain text');
+                            contentEl.innerHTML = '<pre style="white-space: pre-wrap">' + content + '</pre>';
+                        }
+                        
+                        // Trigger MathJax typeset
+                        if (window.MathJax && window.MathJax.typesetPromise) {
+                            window.MathJax.typesetPromise([contentEl]).then(() => {
+                                console.log('MathJax typeset complete');
+                            }).catch((err) => console.error('MathJax typeset failed:', err));
+                        } else if (window.typesetMath) {
+                            window.typesetMath();
+                        }
+                    } catch (err) {
+                        console.error('Error rendering notes:', err);
+                        contentEl.innerHTML = '<p class="text-red-400">Error rendering notes. Displaying raw content:</p>' + 
+                                             '<pre style="white-space: pre-wrap; color: var(--text)">' + content + '</pre>';
+                    }
+                } else {
+                    console.warn('Content is empty');
+                    contentEl.innerHTML = '<p class="text-sm italic" style="color: var(--muted)">Structured notes content is empty.</p>';
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderNotes);
+            } else {
+                renderNotes();
+            }
+        })();
+    </script>
 </div>
 </body>
 </html>

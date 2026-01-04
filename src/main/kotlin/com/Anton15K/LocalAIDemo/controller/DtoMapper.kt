@@ -39,6 +39,7 @@ class DtoMapper(private val objectMapper: ObjectMapper) {
             source = lecture.source,
             uploadedBy = lecture.uploadedBy,
             errorMessage = lecture.errorMessage,
+            structuredContent = lecture.structuredContent,
             createdAt = lecture.createdAt,
             updatedAt = lecture.updatedAt,
             themes = themes.map { toThemeResponse(it) }
