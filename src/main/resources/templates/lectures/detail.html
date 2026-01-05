@@ -49,15 +49,33 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-            <!-- Structured Study Notes -->
-            <div th:if="${lecture.structuredContent}" class="ai-surface rounded-lg overflow-hidden">
-                <div class="px-6 py-4" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+            <div th:if="${lecture.structuredContent}" class="ai-surface rounded-lg overflow-hidden" x-data="{ open: false }">
+                <div class="px-6 py-4 flex justify-between items-center" style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03)">
                     <h2 class="text-xl font-semibold" style="color: var(--text)">Structured Study Notes</h2>
+                    <button @click="open = !open" class="text-sm ai-accent hover:opacity-90">
+                        <span x-text="open ? 'hide full text' : 'show full text'">show full text</span>
+                    </button>
                 </div>
                 <!-- Hidden raw content to avoid attribute encoding issues -->
                 <div id="structured-content-raw" style="display: none" th:if="${lecture.structuredContent}" th:text="${lecture.structuredContent}"></div>
-                <div class="p-6 prose max-w-none" id="structured-content" style="color: var(--text)">
-                    <p class="text-sm italic" style="color: var(--muted)">Loading structured notes...</p>
+                
+                <div class="relative">
+                    <div class="p-6 prose max-w-none transition-all duration-300" 
+                         id="structured-content" 
+                         style="color: var(--text)"
+                         :class="open ? 'max-h-none' : 'max-h-[300px] overflow-hidden'">
+                        <p class="text-sm italic" style="color: var(--muted)">Loading structured notes...</p>
+                    </div>
+
+                    <!-- Fade overlay when collapsed -->
+                    <div x-show="!open" 
+                         class="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+                         style="background-image: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent)">
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6 text-center" x-show="!open">
+                    <button @click="open = true" class="ai-accent hover:underline font-medium">show full text</button>
                 </div>
             </div>
 
@@ -106,16 +124,26 @@
                     <h2 class="text-xl font-semibold" style="color: var(--text)">Raw Transcript</h2>
                     <button @click="open = !open"
                             class="text-sm ai-accent hover:opacity-90">
-                        <span x-text="open ? 'Hide Full Text' : 'Show Full Text'">Show Full Text</span>
+                        <span x-text="open ? 'hide full text' : 'show full text'">show full text</span>
                     </button>
                 </div>
-                <div class="p-6" x-show="open" x-cloak>
-                    <p id="transcript-content" class="whitespace-pre-wrap" style="color: var(--text)"
-                       th:text="${lecture.transcript}">Transcript content...</p>
+                
+                <div class="relative">
+                    <div class="p-6 transition-all duration-300"
+                         :class="open ? 'max-h-none' : 'max-h-[200px] overflow-hidden'">
+                        <p id="transcript-content" class="whitespace-pre-wrap" style="color: var(--text)"
+                           th:text="${lecture.transcript}">Transcript content...</p>
+                    </div>
+
+                    <!-- Fade overlay when collapsed -->
+                    <div x-show="!open" 
+                         class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
+                         style="background-image: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent)">
+                    </div>
                 </div>
-                <div class="p-6 text-sm" style="color: var(--muted)" x-show="!open">
-                    <p class="line-clamp-2" th:text="${lecture.transcript}">Transcript preview...</p>
-                    <button @click="open = true" class="mt-2 ai-accent hover:underline">Show more</button>
+
+                <div class="px-6 pb-6 text-center" x-show="!open">
+                    <button @click="open = true" class="ai-accent hover:underline font-medium">show more</button>
                 </div>
             </div>
         </div>
@@ -212,7 +240,19 @@
                     try {
                         // Parse Markdown using marked.js
                         if (window.marked && window.marked.parse) {
-                            contentEl.innerHTML = window.marked.parse(content);
+                            function normalizeMathDelimiters(text) {
+                                return text
+                                    // Display math
+                                    .replace(/\\\[/g, '$$')
+                                    .replace( /\\\]/g, '$$')
+                                    // Inline math
+                                    .replace(/\\\(/g, '$')
+                                    .replace(/\\\)/g, '$');
+                            }
+
+                            const normalized = normalizeMathDelimiters(content);
+                            contentEl.innerHTML = window.marked.parse(normalized);
+
                             console.log('Markdown parsed successfully');
                         } else {
                             console.warn('marked.js not found, falling back to plain text');

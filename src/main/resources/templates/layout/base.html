@@ -4,12 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ? ${pageTitle} + ' | Erudit AI demo' : 'Erudit AI demo'">Erudit AI demo</title>
-    
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind CSS + Typography plugin -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
     
     <!-- Custom styles -->
     <style>
+        .prose {
+            color: var(--text);
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3,
+        .prose h4 {
+            color: var(--text);
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+        }
+
+        .prose ol {
+            list-style-type: decimal;
+            padding-left: 1.25rem;
+        }
+
+        .prose li {
+            margin-top: 0.25rem;
+        }
+
+        .prose p {
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .prose hr {
+            border-color: var(--border);
+        }
+
         :root {
             --near-black: #020617;
             --dark-slate: #0F172A;
@@ -138,6 +173,14 @@
 
     <!-- Markdown parser (marked.js) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        if (window.marked) {
+            marked.setOptions({
+                mangle: false,
+                headerIds: false
+            });
+        }
+    </script>
 
     <!-- Trigger MathJax after Alpine renders dynamic sections -->
     <script th:inline="none">

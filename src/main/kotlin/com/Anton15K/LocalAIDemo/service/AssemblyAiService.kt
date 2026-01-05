@@ -53,7 +53,7 @@ class AssemblyAiService(
         headers.set("Authorization", apiKey)
         headers.contentType = MediaType.APPLICATION_JSON
 
-        val body = mapOf("audio_url" to audioUrl)
+        val body = mapOf("audio_url" to audioUrl, "language_detection" to true)
         val request = HttpEntity(body, headers)
 
         val response = restTemplate.postForEntity("$baseUrl/transcript", request, Map::class.java)
