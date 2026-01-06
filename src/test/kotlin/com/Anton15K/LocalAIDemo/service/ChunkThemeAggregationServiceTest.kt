@@ -99,4 +99,48 @@ class ChunkThemeAggregationServiceTest {
         assertEquals("A", aggregated.first().name)
         assertTrue(aggregated.first().confidence > 0.8)
     }
+
+    @Test
+    fun aggregateThemes_ignoresBlankThemeNames() {
+        val service = ChunkThemeAggregationService(
+            minChunkOccurrences = 1,
+            minOccurrenceRatio = 0.0,
+            maxFinalThemes = 12
+        )
+
+        val chunkThemes = listOf(
+            listOf(
+                ExtractedTheme("   ", 1.0, "", emptyList(), null),
+                ExtractedTheme("Geometry", 0.9, "", emptyList(), "Geometry")
+            )
+        )
+
+        val aggregated = service.aggregateThemes(chunkThemes)
+
+        assertEquals(1, aggregated.size)
+        assertEquals("Geometry", aggregated.first().name)
+    }
+
+    @Test
+    fun aggregateThemes_minOccurrenceRatioOverride_canIncreaseThreshold() {
+        val service = ChunkThemeAggregationService(
+            minChunkOccurrences = 1,
+            minOccurrenceRatio = 0.0,
+            maxFinalThemes = 12
+        )
+
+        // Theme appears in 2/4 chunks
+        val chunkThemes = listOf(
+            listOf(ExtractedTheme("A", 1.0, "", emptyList(), null)),
+            emptyList(),
+            listOf(ExtractedTheme("A", 1.0, "", emptyList(), null)),
+            emptyList()
+        )
+
+        val strict = service.aggregateThemes(chunkThemes, minOccurrenceRatioOverride = 0.75)
+        val lenient = service.aggregateThemes(chunkThemes, minOccurrenceRatioOverride = 0.25)
+
+        assertEquals(0, strict.size)
+        assertEquals(1, lenient.size)
+    }
 }
