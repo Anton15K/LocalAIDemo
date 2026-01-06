@@ -250,8 +250,38 @@
                                     .replace(/\\\)/g, '$');
                             }
 
+                            function protectMath(text) {
+                                const math = [];
+                                let i = 0;
+
+                                // Protect display math $$...$$
+                                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
+                                    math.push(`$$${m}$$`);
+                                    return `@@MATH${i++}@@`;
+                                });
+
+                                // Protect inline math $...$
+                                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
+                                    math.push(`$${m}$`);
+                                    return `@@MATH${i++}@@`;
+                                });
+
+                                return { text, math };
+                            }
+
+                            function restoreMath(html, math) {
+                                return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
+                            }
+
+                            // ---- pipeline ----
                             const normalized = normalizeMathDelimiters(content);
-                            contentEl.innerHTML = window.marked.parse(normalized);
+                            const { text, math } = protectMath(normalized);
+
+                            let html = marked.parse(text);
+                            html = restoreMath(html, math);
+
+                            contentEl.innerHTML = html;
+
 
                             console.log('Markdown parsed successfully');
                         } else {

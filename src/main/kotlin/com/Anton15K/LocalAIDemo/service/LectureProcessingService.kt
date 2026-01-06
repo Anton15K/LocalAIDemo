@@ -27,11 +27,13 @@ class LectureProcessingService(
         private val problemRetrievalService: ProblemRetrievalService,
         private val assemblyAiService: AssemblyAiService,
         private val lectureSummarizationService: LectureSummarizationService,
+        private val videoFrameExtractionService: VideoFrameExtractionService,
+        private val imageToTextService: ImageToTextService,
         @org.springframework.beans.factory.annotation.Value(
-                "\${app.theme-extraction.chunk-level-enabled:true}"
+            "\${app.theme-extraction.chunk-level-enabled:true}"
         )
         private val chunkLevelEnabled: Boolean
-) {
+    ) {
     private val logger = LoggerFactory.getLogger(LectureProcessingService::class.java)
 
     /** Create a new lecture from transcript text. */
@@ -75,26 +77,131 @@ class LectureProcessingService(
             IllegalArgumentException("Lecture not found: $lectureId")
         }
         
+        var tempDir: java.io.File? = null
         try {
-            logger.info("Starting transcription for lecture: ${lecture.title}")
-            val transcript = assemblyAiService.transcribeVideo(videoBytes)
+            logger.info("Starting processing for lecture: ${lecture.title}")
             
+            // 1. Extract frames (at most 30)
+            val (frames, extractedTempDir) = try {
+                videoFrameExtractionService.extractFrames(videoBytes, 30)
+            } catch (e: Exception) {
+                logger.error("Frame extraction failed for lecture ${lecture.id}, continuing with transcript only: ${e.message}")
+                Pair(emptyMap<Long, java.io.File>(), null)
+            }
+            tempDir = extractedTempDir
+
+            // 2. Transcribe audio
+            logger.info("Starting transcription for lecture: ${lecture.title}")
+            val transcriptResponse = assemblyAiService.transcribeVideo(videoBytes)
+            
+            // 3. Get descriptions for frames asynchronously
+            val descriptionFutures = frames.mapValues { (_, file) ->
+                imageToTextService.describeFrameAsync(file)
+            }
+
+            // 4. Wait for descriptions and handle potential failures
+            val frameDescriptions = descriptionFutures.mapValues { (timestamp, future) ->
+                try {
+                    future.get(1, java.util.concurrent.TimeUnit.MINUTES)
+                } catch (e: Exception) {
+                    logger.error("Failed to get description for frame at $timestamp ms: ${e.message}")
+                    null
+                }
+            }.filterValues { it != null } as Map<Long, String>
+            logger.info("Frame descriptions count: ${frameDescriptions.size}")
+            logger.info("Frame timestamps: ${frameDescriptions.keys}")
+            logger.info("Sentence count: ${transcriptResponse.sentences?.size}")
+            // 5. Merge frame descriptions into the transcript
+            val mergedTranscript =
+                if (frameDescriptions.isNotEmpty() && transcriptResponse.words != null) {
+                    mergeTranscriptWithFrames(transcriptResponse, frameDescriptions)
+                } else {
+                    transcriptResponse.text
+                }
+
+            logger.info("Merged Transcript:")
             val updatedLecture = lecture.copy(
-                transcript = transcript,
+                transcript = mergedTranscript,
                 updatedAt = Instant.now()
             )
             lectureRepository.save(updatedLecture)
-            logger.info("Transcription completed for lecture: ${lecture.title}")
+            logger.info("Processing completed for lecture: ${lecture.title}")
         } catch (e: Exception) {
-            logger.error("Transcription failed for lecture ${lecture.id}: ${e.message}", e)
+            logger.error("Transcription/Processing failed for lecture ${lecture.id}: ${e.message}", e)
             val failedLecture = lecture.copy(
                 status = LectureStatus.FAILED,
-                errorMessage = "Transcription failed: ${e.message}",
+                errorMessage = "Processing failed: ${e.message}",
                 updatedAt = Instant.now()
             )
             lectureRepository.save(failedLecture)
             throw e
+        } finally {
+            // Cleanup: delete frames and temp directory
+            try {
+                tempDir?.let { dir ->
+                    if (dir.exists()) {
+                        dir.deleteRecursively()
+                        logger.info("Deleted temporary frame directory: ${dir.absolutePath}")
+                    }
+                }
+            } catch (e: Exception) {
+                logger.warn("Failed to delete temporary directory ${tempDir?.absolutePath}: ${e.message}")
+            }
         }
+    }
+
+    private fun mergeTranscriptWithFrames(
+        transcript: AssemblyAiService.TranscriptResponse,
+        frameDescriptions: Map<Long, String>
+    ): String {
+        val words = transcript.words ?: return transcript.text
+        if (frameDescriptions.isEmpty()) return transcript.text
+
+        val sortedFrames = frameDescriptions.toSortedMap() // timestamp -> description
+        val remainingFrames = sortedFrames.toMutableMap()
+
+        val result = StringBuilder()
+
+        for (word in words) {
+            // Insert any frame descriptions that occur before this word
+            val iterator = remainingFrames.iterator()
+            while (iterator.hasNext()) {
+                val (frameTimestamp, description) = iterator.next()
+                if (frameTimestamp <= word.start) {
+                    result.append(
+                        "\n[Visual Content at ${formatTimestamp(frameTimestamp)}: $description]\n"
+                    )
+                    logger.info(
+                        "[Visual Content at ${formatTimestamp(frameTimestamp)}: $description]"
+                    )
+                    iterator.remove()
+                } else {
+                    break
+                }
+            }
+
+            result.append(word.text).append(" ")
+        }
+
+        // Append any remaining frame descriptions (after last word)
+        for ((frameTimestamp, description) in remainingFrames) {
+            result.append(
+                "\n[Visual Content at ${formatTimestamp(frameTimestamp)}: $description]\n"
+            )
+            logger.info(
+                "[Visual Content at ${formatTimestamp(frameTimestamp)}: $description]"
+            )
+        }
+
+        return result.toString().trim()
+    }
+
+
+    private fun formatTimestamp(ms: Long): String {
+        val totalSeconds = ms / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return "%02d:%02d".format(minutes, seconds)
     }
 
     /** Process a lecture: chunk transcript, extract themes, and prepare for retrieval. */

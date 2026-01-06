@@ -19,6 +19,9 @@ RUN gradle bootJar --no-daemon -x test
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# Install ffmpeg and dependencies
+RUN apk add --no-cache ffmpeg
+
 # Add non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 

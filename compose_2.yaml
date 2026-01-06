@@ -113,6 +113,7 @@ services:
       # Provide your token via host env var HUGGINGFACE_TOKEN (optional for public datasets)
       APP_HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}
       APP_ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

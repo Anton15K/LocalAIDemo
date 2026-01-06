@@ -17,8 +17,27 @@ class AssemblyAiService(
     private val logger = LoggerFactory.getLogger(AssemblyAiService::class.java)
     private val restTemplate = RestTemplate()
 
+    data class TranscriptResponse(
+        val text: String,
+        val words: List<Word>? = null,
+        val sentences: List<Sentence>? = null
+    )
+
+    data class Word(
+        val text: String,
+        val start: Long,
+        val end: Long,
+        val confidence: Double
+    )
+
+    data class Sentence(
+        val text: String,
+        val start: Long,
+        val end: Long
+    )
+
     /** Runs full transcription pipeline for a video file. */
-    fun transcribeVideo(fileBytes: ByteArray): String {
+    fun transcribeVideo(fileBytes: ByteArray): TranscriptResponse {
         if (apiKey.isBlank()) {
             throw IllegalStateException("AssemblyAI API key is not configured")
         }
@@ -63,7 +82,7 @@ class AssemblyAiService(
     }
 
     /** Get transcript text for the given ID. */
-    private fun pollForTranscript(transcriptId: String): String {
+    private fun pollForTranscript(transcriptId: String): TranscriptResponse {
         val headers = HttpHeaders()
         headers.set("Authorization", apiKey)
         val request = HttpEntity<Unit>(headers)
@@ -80,7 +99,30 @@ class AssemblyAiService(
             logger.debug("Transcription status: $status")
 
             when (status) {
-                "completed" -> return response.body?.get("text") as String
+                "completed" -> {
+                    val text = response.body?.get("text") as String
+                    
+                    val wordsData = response.body?.get("words") as? List<Map<String, Any>>
+                    val words = wordsData?.map {
+                        Word(
+                            text = it["text"] as String,
+                            start = (it["start"] as Number).toLong(),
+                            end = (it["end"] as Number).toLong(),
+                            confidence = (it["confidence"] as Number).toDouble()
+                        )
+                    }
+
+                    val sentencesData = response.body?.get("sentences") as? List<Map<String, Any>>
+                    val sentences = sentencesData?.map {
+                        Sentence(
+                            text = it["text"] as String,
+                            start = (it["start"] as Number).toLong(),
+                            end = (it["end"] as Number).toLong()
+                        )
+                    }
+                    
+                    return TranscriptResponse(text, words, sentences)
+                }
                 "error" -> {
                     val error = response.body?.get("error") as? String
                     throw RuntimeException("Transcription failed: $error")
