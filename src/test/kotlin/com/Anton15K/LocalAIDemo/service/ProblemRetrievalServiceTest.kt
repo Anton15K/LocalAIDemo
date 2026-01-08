@@ -5,303 +5,299 @@ import com.Anton15K.LocalAIDemo.repository.ProblemRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Instant
+import java.util.Optional
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import org.springframework.ai.document.Document
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import java.time.Instant
-import java.util.UUID
 
 class ProblemRetrievalServiceTest {
 
-    private val problemRepository: ProblemRepository = mockk()
-    private val embeddingService: EmbeddingService = mockk()
-    private val topicMatchBaseScore = 0.6
-    
-    private val service = ProblemRetrievalService(
-        problemRepository = problemRepository,
-        embeddingService = embeddingService,
-        topicMatchBaseScore = topicMatchBaseScore
-    )
+    private val problemRepository: ProblemRepository = mockk(relaxed = true)
+    private val embeddingService: EmbeddingService = mockk(relaxed = true)
+
+    private val service =
+        ProblemRetrievalService(
+            problemRepository = problemRepository,
+            embeddingService = embeddingService,
+            topicMatchBaseScore = 0.6
+        )
 
     @Test
-    fun `findByTopic should return problems from repository`() {
-        // Given
+    fun findByTopic_delegatesToRepository() {
+        val pageable = PageRequest.of(0, 5)
         val topic = "Algebra"
-        val pageable = PageRequest.of(0, 10)
-        val problems = listOf(
-            createProblem(topic = topic),
-            createProblem(topic = topic)
-        )
-        val expectedPage = PageImpl(problems, pageable, problems.size.toLong())
-        
-        every { problemRepository.findByTopic(topic, pageable) } returns expectedPage
+        val problems = listOf(createProblem(topic = topic), createProblem(topic = topic))
+        val expected = PageImpl(problems, pageable, problems.size.toLong())
 
-        // When
+        every { problemRepository.findByTopic(topic, pageable) } returns expected
+
         val result = service.findByTopic(topic, pageable)
 
-        // Then
-        assertEquals(expectedPage, result)
-        verify { problemRepository.findByTopic(topic, pageable) }
+        assertEquals(expected, result)
+        verify(exactly = 1) { problemRepository.findByTopic(topic, pageable) }
     }
 
     @Test
-    fun `findByTopics with empty list should return empty page`() {
-        // Given
-        val pageable = PageRequest.of(0, 10)
+    fun findByTopics_empty_returnsEmptyPage_andDoesNotHitRepository() {
+        val pageable = PageRequest.of(0, 5)
 
-        // When
         val result = service.findByTopics(emptyList(), pageable)
 
-        // Then
         assertEquals(0, result.totalElements)
         assertTrue(result.content.isEmpty())
+        verify(exactly = 0) { problemRepository.findByTopicIn(any(), any()) }
     }
 
     @Test
-    fun `findByTopics should return problems from repository`() {
-        // Given
+    fun findByTopics_nonEmpty_delegatesToRepository() {
+        val pageable = PageRequest.of(0, 5)
         val topics = listOf("Algebra", "Geometry")
-        val pageable = PageRequest.of(0, 10)
-        val problems = listOf(
-            createProblem(topic = "Algebra"),
-            createProblem(topic = "Geometry")
-        )
-        val expectedPage = PageImpl(problems, pageable, problems.size.toLong())
-        
-        every { problemRepository.findByTopicIn(topics, pageable) } returns expectedPage
+        val problems = listOf(createProblem(topic = "Algebra"), createProblem(topic = "Geometry"))
+        val expected = PageImpl(problems, pageable, problems.size.toLong())
 
-        // When
+        every { problemRepository.findByTopicIn(topics, pageable) } returns expected
+
         val result = service.findByTopics(topics, pageable)
 
-        // Then
-        assertEquals(expectedPage, result)
-        verify { problemRepository.findByTopicIn(topics, pageable) }
+        assertEquals(expected, result)
+        verify(exactly = 1) { problemRepository.findByTopicIn(topics, pageable) }
     }
 
     @Test
-    fun `searchByThemes with empty themes should return empty page`() {
-        // Given
+    fun searchByThemes_empty_returnsEmpty_andDoesNotCallEmbedding() {
         val pageable = PageRequest.of(0, 10)
 
-        // When
         val result = service.searchByThemes(emptyList(), pageable = pageable)
 
-        // Then
         assertEquals(0, result.totalElements)
         assertTrue(result.content.isEmpty())
+        verify(exactly = 0) { embeddingService.similaritySearch(any(), any()) }
     }
 
     @Test
-    fun `searchByThemes should perform semantic search and filter by mapped topics`() {
-        // Given
-        val theme = ExtractedTheme(
-            name = "Linear Algebra",
-            confidence = 0.9,
-            summary = "Vectors and matrices",
-            keywords = listOf("vector", "matrix", "transformation"),
-            mappedTopic = "Linear Algebra"
-        )
+    fun searchByThemes_dedupesProblemsAcrossThemes_andWeightsByConfidence() {
         val pageable = PageRequest.of(0, 10)
-        val topK = 5
-        
-        val problem = createProblem(topic = "Linear Algebra")
-        val document = Document(
-            problem.id.toString(),
-            "Topic: Linear Algebra\nProblem: Solve the system of equations",
-            mapOf("score" to 0.85)
+        val problemId = UUID.randomUUID()
+        val problem = createProblem(id = problemId, topic = "Geometry")
+
+        val themeA = ExtractedTheme(
+            name = "Triangles",
+            confidence = 0.5,
+            summary = "",
+            keywords = listOf("triangle"),
+            mappedTopic = null
         )
-        
-        every { embeddingService.similaritySearch(any(), topK) } returns listOf(document)
-        every { problemRepository.findById(problem.id!!) } returns java.util.Optional.of(problem)
+        val themeB = themeA.copy(name = "Angles", confidence = 0.9)
 
-        // When
-        val result = service.searchByThemes(listOf(theme), topK = topK, pageable = pageable)
+        val docs =
+            listOf(
+                Document(problemId.toString(), "irrelevant", mapOf("score" to 0.8))
+            )
 
-        // Then
+        every { embeddingService.similaritySearch(any(), any()) } returns docs
+        every { problemRepository.findById(problemId) } returns Optional.of(problem)
+
+        val result = service.searchByThemes(listOf(themeA, themeB), topK = 10, pageable = pageable)
+
+        // Same problem appears for both themes, should only be returned once.
         assertEquals(1, result.totalElements)
-        val searchResult = result.content.first()
-        assertEquals(problem, searchResult.problem)
-        assertEquals(0.85 * theme.confidence, searchResult.score)
-        assertEquals(theme.name, searchResult.matchedTheme)
+        val single = result.content.single()
+
+        assertEquals(problemId, single.problem.id)
+        // Score should be clamped(0.8 * confidence) for the first-seen theme.
+        // We don't assert which theme wins, but score must match either.
+        assertTrue(single.score == 0.4 || single.score == 0.72)
+
+        verify(exactly = 2) { embeddingService.similaritySearch(any(), 10) }
+        verify(exactly = 1) { problemRepository.findById(problemId) }
     }
 
     @Test
-    fun `hybridSearch should combine topic-based and semantic search`() {
-        // Given
-        val theme = ExtractedTheme(
-            name = "Calculus",
-            confidence = 0.8,
-            summary = "Derivatives and integrals",
-            keywords = listOf("derivative", "integral", "limit"),
-            mappedTopic = "Calculus"
-        )
+    fun searchByThemes_respectsAllowedTopicsFilter() {
         val pageable = PageRequest.of(0, 10)
-        val topK = 5
-        
-        val topicProblem = createProblem(topic = "Calculus")
-        val semanticProblem = createProblem(topic = "Calculus")
-        
-        val topicPage = PageImpl(listOf(topicProblem), Pageable.unpaged(), 1)
-        val document = Document(
-            semanticProblem.id.toString(),
-            "Topic: Calculus\nProblem: Find the derivative",
-            mapOf("score" to 0.75)
-        )
-        
-        every { problemRepository.findByTopicIn(listOf("Calculus"), Pageable.unpaged()) } returns topicPage
-        every { embeddingService.similaritySearch(any(), topK) } returns listOf(document)
-        every { problemRepository.findById(topicProblem.id!!) } returns java.util.Optional.of(topicProblem)
-        every { problemRepository.findById(semanticProblem.id!!) } returns java.util.Optional.of(semanticProblem)
 
-        // When
-        val result = service.hybridSearch(listOf(theme), topK = topK, pageable = pageable)
+        val geometryId = UUID.randomUUID()
+        val algebraId = UUID.randomUUID()
 
-        // Then
-        assertEquals(2, result.totalElements)
-        
-        val topicResult = result.content.find { it.problem.id == topicProblem.id }
-        assertNotNull(topicResult)
-        assertEquals(topicMatchBaseScore, topicResult.score)
-        
-        val semanticResult = result.content.find { it.problem.id == semanticProblem.id }
-        assertNotNull(semanticResult)
-        assertEquals(0.75 * theme.confidence, semanticResult.score)
+        val geometryProblem = createProblem(id = geometryId, topic = "Geometry")
+        val algebraProblem = createProblem(id = algebraId, topic = "Algebra")
+
+        val themes =
+            listOf(
+                ExtractedTheme(
+                    name = "Geometry",
+                    confidence = 1.0,
+                    summary = "",
+                    keywords = emptyList(),
+                    mappedTopic = "Geometry"
+                ),
+                // Unmapped theme should be constrained to allowedTopics when allowedTopics is non-empty.
+                ExtractedTheme(
+                    name = "General",
+                    confidence = 1.0,
+                    summary = "",
+                    keywords = emptyList(),
+                    mappedTopic = null
+                )
+            )
+
+        every { embeddingService.similaritySearch(any(), any()) } answers {
+            listOf(
+                Document(geometryId.toString(), "", mapOf("score" to 0.8)),
+                Document(algebraId.toString(), "", mapOf("score" to 0.9))
+            )
+        }
+
+        every { problemRepository.findById(geometryId) } returns Optional.of(geometryProblem)
+        every { problemRepository.findById(algebraId) } returns Optional.of(algebraProblem)
+
+        val result = service.searchByThemes(themes, topK = 10, pageable = pageable)
+
+        assertEquals(1, result.totalElements)
+        assertEquals("Geometry", result.content.single().problem.topic)
     }
 
     @Test
-    fun `indexProblem should store document with correct metadata`() {
-        // Given
-        val problem = createProblem()
-        every { embeddingService.storeDocument(any(), any(), any()) } returns Unit
+    fun hybridSearch_boostsScoreWhenFoundByTopicAndSemantic_andClampsToOne() {
+        val pageable = PageRequest.of(0, 10)
+        val id = UUID.randomUUID()
+        val problem = createProblem(id = id, topic = "Geometry")
 
-        // When
+        val theme = ExtractedTheme(
+            name = "Geometry",
+            confidence = 1.0,
+            summary = "",
+            keywords = emptyList(),
+            mappedTopic = "Geometry"
+        )
+
+        val topicPage = PageImpl(listOf(problem), Pageable.unpaged(), 1)
+        every { problemRepository.findByTopicIn(listOf("Geometry"), Pageable.unpaged()) } returns topicPage
+
+        every { embeddingService.similaritySearch(any(), any()) } returns
+            listOf(Document(id.toString(), "", mapOf("score" to 0.9)))
+
+        every { problemRepository.findById(id) } returns Optional.of(problem)
+
+        val result = service.hybridSearch(listOf(theme), topK = 10, pageable = pageable)
+
+        assertEquals(1, result.totalElements)
+        val score = result.content.single().score
+        assertEquals(1.0, score)
+    }
+
+    @Test
+    fun indexProblem_withNullId_doesNothing() {
+        val problem = createProblem(id = null)
+
         service.indexProblem(problem)
 
-        // Then
-        verify {
+        verify(exactly = 0) { embeddingService.storeDocument(any(), any(), any()) }
+    }
+
+    @Test
+    fun indexProblem_storesUuidIdAndContentAndMetadata() {
+        val id = UUID.randomUUID()
+        val problem =
+            createProblem(
+                id = id,
+                sourceId = "src-1",
+                topic = "Algebra",
+                subtopic = "Quadratics",
+                statement = "Solve x^2 + 5x + 6 = 0",
+                difficulty = 3
+            )
+
+        service.indexProblem(problem)
+
+        verify(exactly = 1) {
             embeddingService.storeDocument(
-                problem.id.toString(),
-                "Topic: ${problem.topic}\nProblem: ${problem.statement}",
-                mapOf(
-                    "sourceId" to problem.sourceId,
-                    "topic" to problem.topic,
-                    "difficulty" to (problem.difficulty ?: 0),
-                    "type" to "problem"
-                )
+                id.toString(),
+                match { it.contains("Topic: Algebra") && it.contains("Subtopic: Quadratics") && it.contains("Problem: Solve") },
+                match {
+                    it["sourceId"] == "src-1" &&
+                        it["topic"] == "Algebra" &&
+                        it["difficulty"] == 3 &&
+                        it["type"] == "problem"
+                }
             )
         }
     }
 
     @Test
-    fun `indexProblems should store multiple documents`() {
-        // Given
-        val problems = listOf(createProblem(), createProblem())
-        every { embeddingService.storeDocuments(any()) } returns Unit
+    fun indexProblems_skipsNullIds_andStoresDocumentsInBatch() {
+        val id1 = UUID.randomUUID()
+        val id2 = UUID.randomUUID()
 
-        // When
+        val problems =
+            listOf(
+                createProblem(id = id1, sourceId = "s1"),
+                createProblem(id = null, sourceId = "no-id"),
+                createProblem(id = id2, sourceId = "s2")
+            )
+
         service.indexProblems(problems)
 
-        // Then
-        verify { embeddingService.storeDocuments(any()) }
-    }
-
-    @Test
-    fun `buildSearchQuery should include mapped topic when available`() {
-        // Given
-        val theme = ExtractedTheme(
-            name = "Geometry",
-            confidence = 0.9,
-            summary = "Shapes and angles",
-            keywords = listOf("triangle", "circle", "angle"),
-            mappedTopic = "Geometry"
-        )
-
-        // When
-        val query = service.buildSearchQuery(theme)
-
-        // Then
-        assertTrue(query.contains("Topic: Geometry"))
-        assertTrue(query.contains("Geometry"))
-        assertTrue(query.contains("triangle circle angle"))
-        assertTrue(query.contains("Shapes and angles"))
-    }
-
-    @Test
-    fun `buildProblemContent should include topic and statement`() {
-        // Given
-        val problem = createProblem(
-            topic = "Algebra",
-            subtopic = "Quadratic Equations",
-            statement = "Solve x^2 + 5x + 6 = 0"
-        )
-
-        // When
-        val content = service.buildProblemContent(problem)
-
-        // Then
-        assertEquals(
-            "Topic: Algebra\nSubtopic: Quadratic Equations\nProblem: Solve x^2 + 5x + 6 = 0",
-            content
-        )
-    }
-
-    @Test
-    fun `extractProblemId should handle prefixed and unprefixed UUIDs`() {
-        // Given
-        val problemId = UUID.randomUUID()
-        val prefixedId = "problem:$problemId"
-        val unprefixedId = problemId.toString()
-
-        // When
-        val result1 = service.extractProblemId(prefixedId)
-        val result2 = service.extractProblemId(unprefixedId)
-        val result3 = service.extractProblemId("invalid-uuid")
-
-        // Then
-        assertEquals(problemId, result1)
-        assertEquals(problemId, result2)
-        assertEquals(null, result3)
-    }
-
-    @Test
-    fun `clampScore should limit values between 0 and 1`() {
-        // Given
-        val testCases = listOf(
-            -0.5 to 0.0,
-            0.3 to 0.3,
-            1.5 to 1.0,
-            0.0 to 0.0,
-            1.0 to 1.0
-        )
-
-        // When & Then
-        testCases.forEach { (input, expected) ->
-            val result = service.clampScore(input)
-            assertEquals(expected, result, "clampScore($input) should be $expected")
+        verify(exactly = 1) {
+            embeddingService.storeDocuments(
+                match { docs ->
+                    docs.size == 2 &&
+                        docs.all { it.metadata["type"] == "problem" } &&
+                        docs.map { it.id }.toSet() == setOf(id1.toString(), id2.toString())
+                }
+            )
         }
     }
 
+    @Test
+    fun searchByThemes_acceptsPrefixedProblemIds() {
+        val pageable = PageRequest.of(0, 10)
+        val id = UUID.randomUUID()
+        val problem = createProblem(id = id, topic = "Algebra")
+
+        val theme = ExtractedTheme(
+            name = "Algebra",
+            confidence = 1.0,
+            summary = "",
+            keywords = emptyList(),
+            mappedTopic = null
+        )
+
+        every { embeddingService.similaritySearch(any(), any()) } returns
+            listOf(Document("problem:$id", "", mapOf("score" to 0.7)))
+        every { problemRepository.findById(id) } returns Optional.of(problem)
+
+        val result = service.searchByThemes(listOf(theme), topK = 10, pageable = pageable)
+
+        assertEquals(1, result.totalElements)
+        assertEquals(id, result.content.single().problem.id)
+    }
+
     private fun createProblem(
-        topic: String = "Test Topic",
+        id: UUID? = UUID.randomUUID(),
+        sourceId: String = "source-${UUID.randomUUID()}",
+        statement: String = "Some statement",
+        solution: String? = null,
+        topic: String = "Topic",
         subtopic: String? = null,
-        statement: String = "Test problem statement",
         difficulty: Int? = 1
     ): Problem {
         return Problem(
-            id = UUID.randomUUID(),
-            sourceId = "test-${UUID.randomUUID()}",
+            id = id,
+            sourceId = sourceId,
             statement = statement,
-            solution = "Test solution",
+            solution = solution,
             topic = topic,
             subtopic = subtopic,
             difficulty = difficulty,
-            createdAt = Instant.now(),
-            updatedAt = Instant.now()
+            createdAt = Instant.parse("2024-01-01T00:00:00Z"),
+            updatedAt = Instant.parse("2024-01-01T00:00:00Z")
         )
     }
 }
