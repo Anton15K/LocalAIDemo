@@ -1,1 +1,1 @@
-rootProject.name = "LocalAIDemo"
+rootProject.name = "Erudit AI"
