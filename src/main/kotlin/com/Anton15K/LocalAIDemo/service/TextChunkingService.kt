@@ -18,6 +18,10 @@ class TextChunkingService {
     ): List<TextChunk> {
         if (text.isBlank()) return emptyList()
 
+        require(chunkSize > 0) { "chunkSize must be > 0" }
+        require(overlap >= 0) { "overlap must be >= 0" }
+        require(overlap < chunkSize) { "overlap must be < chunkSize" }
+
         val words = text.split(Regex("\\s+"))
         val chunks = mutableListOf<TextChunk>()
         var startIndex = 0
@@ -56,6 +60,8 @@ class TextChunkingService {
             targetChunkSize: Int = DEFAULT_CHUNK_SIZE
     ): List<TextChunk> {
         if (text.isBlank()) return emptyList()
+
+        require(targetChunkSize > 0) { "targetChunkSize must be > 0" }
 
         // 1. Split by double newlines (paragraphs)
         /*
@@ -163,6 +169,8 @@ class TextChunkingService {
     /** Split text by sentences, grouping into chunks of approximately target size. */
     fun chunkBySentences(text: String, targetChunkSize: Int = DEFAULT_CHUNK_SIZE): List<TextChunk> {
         if (text.isBlank()) return emptyList()
+
+        require(targetChunkSize > 0) { "targetChunkSize must be > 0" }
 
         // Split by sentence boundaries. (?<=[.!?]) keeps the delimiter.
         val sentences = text.split(Regex("(?<=[.!?])\\s+"))

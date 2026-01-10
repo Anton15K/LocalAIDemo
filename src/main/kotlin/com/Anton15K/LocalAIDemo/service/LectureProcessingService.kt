@@ -4,6 +4,7 @@ import com.Anton15K.LocalAIDemo.domain.*
 import com.Anton15K.LocalAIDemo.repository.LectureChunkRepository
 import com.Anton15K.LocalAIDemo.repository.LectureRepository
 import com.Anton15K.LocalAIDemo.repository.ThemeRepository
+import com.Anton15K.LocalAIDemo.service.VideoFrameExtractionService
 import java.time.Instant
 import java.util.UUID
 import org.slf4j.LoggerFactory

@@ -2,6 +2,7 @@ package com.Anton15K.LocalAIDemo.service
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class TextChunkingServiceTest {
@@ -31,6 +32,15 @@ class TextChunkingServiceTest {
         assertEquals(6, chunks[2].tokenStart)
         assertEquals(9, chunks[2].tokenEnd)
         assertEquals("w7 w8 w9 w10", chunks[2].text)
+    }
+
+    @Test
+    fun chunkText_rejectsInvalidOverlap() {
+        val text = (1..20).joinToString(" ") { "w$it" }
+
+        assertFailsWith<IllegalArgumentException> { service.chunkText(text, chunkSize = 4, overlap = 4) }
+        assertFailsWith<IllegalArgumentException> { service.chunkText(text, chunkSize = 4, overlap = 10) }
+        assertFailsWith<IllegalArgumentException> { service.chunkText(text, chunkSize = 0, overlap = 0) }
     }
 
     @Test
@@ -73,5 +83,17 @@ class TextChunkingServiceTest {
         // Last 2-word chunk
         assertEquals(10, chunks[2].tokenStart)
         assertEquals(11, chunks[2].tokenEnd)
+    }
+
+    @Test
+    fun chunkSemantically_joinsMultipleLinesIntoChunk_withDoubleNewlines() {
+        val text = "First paragraph here\nSecond paragraph here"
+
+        val chunks = service.chunkSemantically(text, targetChunkSize = 100)
+
+        assertEquals(1, chunks.size)
+        assertEquals("First paragraph here\n\nSecond paragraph here", chunks[0].text)
+        assertEquals(0, chunks[0].tokenStart)
+        assertEquals(5, chunks[0].tokenEnd)
     }
 }

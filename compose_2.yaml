@@ -4,7 +4,7 @@ services:
   # ===========================================
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: localai-postgres
+    container_name: eruditai-postgres
     environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
@@ -19,14 +19,14 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - localai-network
+      - eruditai-network
 
   # ===========================================
   # Ollama - Local LLM server
   # ===========================================
   ollama:
     image: ollama/ollama:latest
-    container_name: localai-ollama
+    container_name: eruditai-ollama
     profiles: [ "docker-ollama" ]
     ports:
       - "11435:11434"
@@ -39,7 +39,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - localai-network
+      - eruditai-network
     # Uncomment below for GPU support (NVIDIA)
     # deploy:
     #   resources:
@@ -54,7 +54,7 @@ services:
     # ===========================================
   ollama-init:
     image: ollama/ollama:latest
-    container_name: localai-ollama-init
+    container_name: eruditai-ollama-init
     profiles: [ "docker-ollama" ]
     depends_on:
       ollama:
@@ -74,7 +74,7 @@ services:
           ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text
         echo "Models pulled successfully!"
     networks:
-      - localai-network
+      - eruditai-network
 
   # ===========================================
   # Spring Boot Application
@@ -83,7 +83,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: localai-app
+    container_name: eruditai-app
     ports:
       - "8080:8080"
     environment:
@@ -124,7 +124,7 @@ services:
       retries: 3
       start_period: 90s
     networks:
-      - localai-network
+      - eruditai-network
     restart: unless-stopped
 
 # ===========================================
@@ -132,14 +132,14 @@ services:
 # ===========================================
 volumes:
   postgres_data:
-    name: localai-postgres-data
+    name: eruditai-postgres-data
   ollama_data:
-    name: localai-ollama-data
+    name: eruditai-ollama-data
 
 # ===========================================
 # Network
 # ===========================================
 networks:
-  localai-network:
-    name: localai-network
+  eruditai-network:
+    name: eruditai-network
     driver: bridge
