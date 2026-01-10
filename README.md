@@ -200,6 +200,16 @@ Secrets:
 - Rate limiting and upload size policies
 - Audit trail for dataset imports and user uploads
 
+### 5) Solution analysis (learning feedback)
+- Let users submit their solution (text/LaTeX, and later scanned handwriting) and have the model:
+  - check correctness and detect common mistakes
+  - give step-by-step feedback and targeted hints
+  - propose a grading rubric aligned with the course/university style
+
+### 6) Multi-subject dataset expansion
+- Generalize ingestion beyond math by adding pipelines for other subjects (e.g., physics, CS, economics).
+- Curate and track dataset sources per region/university (license/provenance), then reuse the same retrieval + generation approach per subject.
+
 ---
 
 ## Future direction: generating “similar tasks” + fine-tuning
