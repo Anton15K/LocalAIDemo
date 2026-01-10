@@ -7,93 +7,93 @@
     <div class="mb-8">
         <nav class="flex mb-4" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2">
-                <li><a href="/lectures" style="color: var(--muted)" class="hover:opacity-90">Lectures</a></li>
+                <li><a href="/lectures" style="color: var(--text-muted)" class="hover:opacity-90">Lectures</a></li>
                 <li><span class="text-gray-400">/</span></li>
-                <li class="font-medium" style="color: var(--text)">New</li>
+                <li class="font-medium" style="color: var(--text-main)">New</li>
             </ol>
         </nav>
-        <h1 class="text-3xl font-bold" style="color: var(--text)">Create New Lecture</h1>
+        <h1 class="text-3xl font-bold" style="color: var(--text-main)">Create New Lecture</h1>
     </div>
 
     <!-- Form -->
     <div class="ai-surface rounded-lg overflow-hidden max-w-3xl">
         <form action="/lectures/create" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
             <div>
-                <label for="title" class="block text-sm font-medium" style="color: var(--text)">Lecture Title *</label>
+                <label for="title" class="block text-sm font-medium" style="color: var(--text-main)">Lecture Title *</label>
                 <input type="text" id="title" name="title" required
-                       class="mt-1 block w-full rounded-md border p-3"
-                       style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)"
+                       class="mt-1 block w-full rounded-md border p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                       style="background: var(--bg-surface); color: var(--text-main); border-color: var(--border)"
                        placeholder="e.g., Introduction to Calculus - Lecture 1">
             </div>
 
             <div x-data="{ uploadType: 'text' }">
-                <label class="block text-sm font-medium mb-2" style="color: var(--text)">Lecture Content Source</label>
+                <label class="block text-sm font-medium mb-2" style="color: var(--text-main)">Lecture Content Source</label>
                 <div class="flex space-x-4 mb-4">
                     <label class="inline-flex items-center">
-                        <input type="radio" x-model="uploadType" value="text" class="form-radio text-indigo-600">
-                        <span class="ml-2" style="color: var(--text)">Text Transcript</span>
+                        <input type="radio" x-model="uploadType" value="text" class="form-radio text-blue-600">
+                        <span class="ml-2" style="color: var(--text-main)">Text Transcript</span>
                     </label>
                     <label class="inline-flex items-center">
-                        <input type="radio" x-model="uploadType" value="video" class="form-radio text-indigo-600">
-                        <span class="ml-2" style="color: var(--text)">Video File</span>
+                        <input type="radio" x-model="uploadType" value="video" class="form-radio text-blue-600">
+                        <span class="ml-2" style="color: var(--text-main)">Video File</span>
                     </label>
                 </div>
 
                 <div x-show="uploadType === 'text'">
-                    <label for="transcript" class="block text-sm font-medium" style="color: var(--text)">Lecture Transcript *</label>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">Paste the full transcript or speech content from the lecture.</p>
+                    <label for="transcript" class="block text-sm font-medium" style="color: var(--text-main)">Lecture Transcript *</label>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">Paste the full transcript or speech content from the lecture.</p>
                     <textarea id="transcript" name="transcript" rows="15" :required="uploadType === 'text'"
-                              class="mt-2 block w-full rounded-md border p-3 font-mono text-sm"
-                              style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)"
+                              class="mt-2 block w-full rounded-md border p-3 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                              style="background: var(--bg-surface); color: var(--text-main); border-color: var(--border)"
                               placeholder="Today we're going to discuss derivatives. The derivative of a function measures the rate of change..."></textarea>
                 </div>
 
                 <div x-show="uploadType === 'video'">
-                    <label for="video" class="block text-sm font-medium" style="color: var(--text)">Upload Video *</label>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">Upload a video file to be transcribed automatically using AssemblyAI.</p>
+                    <label for="video" class="block text-sm font-medium" style="color: var(--text-main)">Upload Video *</label>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">Upload a video file to be transcribed automatically using AssemblyAI.</p>
                     <input type="file" id="video" name="video" accept="video/*,audio/*" :required="uploadType === 'video'"
-                           class="mt-2 block w-full text-sm" style="color: var(--muted)">
+                           class="mt-2 block w-full text-sm" style="color: var(--text-muted)">
                 </div>
             </div>
 
             <div>
-          <label for="uploadedBy" class="block text-sm font-medium" style="color: var(--text)">Uploaded By (optional)</label>
+          <label for="uploadedBy" class="block text-sm font-medium" style="color: var(--text-main)">Uploaded By (optional)</label>
                 <input type="text" id="uploadedBy" name="uploadedBy"
-              class="mt-1 block w-full rounded-md border p-3"
-              style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)"
+              class="mt-1 block w-full rounded-md border p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              style="background: var(--bg-surface); color: var(--text-main); border-color: var(--border)"
                        placeholder="Your name">
             </div>
 
             <div class="border-t pt-4">
-                <label for="tuningLevel" class="block text-sm font-medium" style="color: var(--text)">Analysis Granularity</label>
-                <p class="mt-1 text-sm" style="color: var(--muted)">Coarse = fewer, bigger chunks. Fine = more, smaller chunks.</p>
+                <label for="tuningLevel" class="block text-sm font-medium" style="color: var(--text-main)">Analysis Granularity</label>
+                <p class="mt-1 text-sm" style="color: var(--text-muted)">Coarse = fewer, bigger chunks. Fine = more, smaller chunks.</p>
                 <div class="mt-3">
                     <input type="range" id="tuningLevel" name="tuningLevel" min="1" max="10" value="5"
-                           class="w-full">
-                    <div class="flex justify-between text-xs mt-1" style="color: var(--muted)">
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="flex justify-between text-xs mt-1" style="color: var(--text-muted)">
                         <span>Coarse</span>
                         <span>Fine</span>
                     </div>
                 </div>
                 <div class="mt-4">
-                    <label for="lectureMinutes" class="block text-sm font-medium" style="color: var(--text)">Lecture Length (minutes, optional)</label>
+                    <label for="lectureMinutes" class="block text-sm font-medium" style="color: var(--text-main)">Lecture Length (minutes, optional)</label>
                     <input type="number" id="lectureMinutes" name="lectureMinutes" min="1" step="1"
-                           class="mt-1 block w-full rounded-md border p-3"
-                           style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)"
+                           class="mt-1 block w-full rounded-md border p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                           style="background: var(--bg-surface); color: var(--text-main); border-color: var(--border)"
                            placeholder="e.g., 90">
                 </div>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4 border-t">
-                <a href="/lectures" class="px-4 py-2 rounded-md transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">
+                <a href="/lectures" class="px-4 py-2 rounded-md transition border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium">
                     Cancel
                 </a>
                 <button type="submit" name="action" value="save"
-                        class="px-4 py-2 rounded-md transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">
+                        class="px-4 py-2 rounded-md transition border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium">
                     Save as Draft
                 </button>
                 <button type="submit" name="action" value="analyze"
-                        class="px-4 py-2 rounded-md transition ring-1 ring-white/10 ai-glow" style="background: rgba(167,139,250,0.18); color: var(--text)">
+                        class="px-4 py-2 rounded-md transition bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm">
                     Save & Analyze
                 </button>
             </div>

@@ -3,93 +3,90 @@
     th:replace="~{layout/base :: html(pageTitle='Erudit AI', currentPage='landing', content=~{::content})}">
 <body>
 <div th:fragment="content">
-    <section class="ai-surface rounded-2xl overflow-hidden">
+    <section class="ai-surface rounded-2xl overflow-hidden shadow-sm">
         <div class="p-10 sm:p-12">
             <div class="max-w-3xl">
-                <p class="text-sm font-medium" style="color: var(--neon-blue)">Erudit AI • AI-assisted STEM learning</p>
-                <h1 class="mt-3 text-4xl sm:text-5xl font-bold leading-tight" style="color: var(--text)">
+                <p class="text-sm font-medium" style="color: var(--accent-blue)">Erudit AI • AI-assisted STEM learning</p>
+                <h1 class="mt-3 text-4xl sm:text-5xl font-bold leading-tight" style="color: var(--text-main)">
                     Turn raw lectures into
-                    <span style="color: var(--violet)">targeted practice</span>
+                    <span style="color: var(--accent-violet)">targeted practice</span>
                 </h1>
-                <p class="mt-5 text-lg" style="color: var(--muted)">
+                <p class="mt-5 text-lg" style="color: var(--text-muted)">
                     Erudit AI ingests lecture material (including video), extracts learning themes, and recommends the most relevant university-level practice problems using live vector search.
                     Built for students and tutors who want higher-quality practice with less time spent searching.
                 </p>
 
                 <div class="mt-6 flex flex-wrap gap-2">
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(56,189,248,0.12); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.22)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-100">
                         Kotlin + Spring Boot
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.22)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700 border border-purple-100">
                         Postgres + pgvector
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(56,189,248,0.12); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.22)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-100">
                         DeepSeek via Ollama (cloud)
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.22)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700 border border-purple-100">
                         Nomic embeddings (local)
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(229,231,235,0.08); color: var(--text); border: 1px solid var(--border)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-gray-50 text-gray-700 border border-gray-200">
                         AssemblyAI transcription
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(229,231,235,0.08); color: var(--text); border: 1px solid var(--border)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-gray-50 text-gray-700 border border-gray-200">
                         Flyway migrations
                     </span>
-                    <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(229,231,235,0.08); color: var(--text); border: 1px solid var(--border)">
+                    <span class="px-3 py-1 rounded-full text-sm bg-gray-50 text-gray-700 border border-gray-200">
                         Thymeleaf + Tailwind
                     </span>
                 </div>
 
                 <div class="mt-8 flex flex-wrap gap-3">
-                    <a href="/dashboard" class="px-5 py-3 rounded-lg font-medium ai-glow"
-                       style="background: rgba(56,189,248,0.16); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.35)">
+                    <a href="/dashboard" class="px-5 py-3 rounded-lg font-medium shadow-sm bg-blue-600 text-white hover:bg-blue-700 transition">
                         Open dashboard
                     </a>
-                    <a href="/lectures" class="px-5 py-3 rounded-lg font-medium"
-                       style="background: rgba(2,6,23,0.30); color: var(--text); border: 1px solid var(--border)">
+                    <a href="/lectures" class="px-5 py-3 rounded-lg font-medium shadow-sm bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
                         Browse lectures
                     </a>
-                    <a href="/problems" class="px-5 py-3 rounded-lg font-medium"
-                       style="background: rgba(2,6,23,0.30); color: var(--text); border: 1px solid var(--border)">
+                    <a href="/problems" class="px-5 py-3 rounded-lg font-medium shadow-sm bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
                         Explore problems
                     </a>
                 </div>
 
                 <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="ai-surface-solid rounded-xl p-5">
-                        <p class="text-sm" style="color: var(--muted)">Lectures ingested</p>
-                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text)" th:text="${lectureCount}">0</p>
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <p class="text-sm" style="color: var(--text-muted)">Lectures ingested</p>
+                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text-main)" th:text="${lectureCount}">0</p>
                     </div>
-                    <div class="ai-surface-solid rounded-xl p-5">
-                        <p class="text-sm" style="color: var(--muted)">Problems available</p>
-                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text)" th:text="${problemCount}">0</p>
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <p class="text-sm" style="color: var(--text-muted)">Problems available</p>
+                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text-main)" th:text="${problemCount}">0</p>
                     </div>
-                    <div class="ai-surface-solid rounded-xl p-5">
-                        <p class="text-sm" style="color: var(--muted)">Themes extracted</p>
-                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text)" th:text="${themeCount}">0</p>
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <p class="text-sm" style="color: var(--text-muted)">Themes extracted</p>
+                        <p class="mt-2 text-2xl font-semibold" style="color: var(--text-main)" th:text="${themeCount}">0</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="border-t ai-border" style="background: rgba(15,23,42,0.92)">
+        <div class="border-t ai-border" style="background: var(--bg-surface)">
             <div class="px-10 sm:px-12 py-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <h3 class="font-semibold" style="color: var(--text)">1) Ingest</h3>
-                        <p class="mt-2 text-sm" style="color: var(--muted)">
+                        <h3 class="font-semibold" style="color: var(--text-main)">1) Ingest</h3>
+                        <p class="mt-2 text-sm" style="color: var(--text-muted)">
                             Add a transcript or upload video/audio — we transcribe with AssemblyAI and persist the lecture with metadata.
                         </p>
                     </div>
                     <div>
-                        <h3 class="font-semibold" style="color: var(--text)">2) Understand</h3>
-                        <p class="mt-2 text-sm" style="color: var(--muted)">
+                        <h3 class="font-semibold" style="color: var(--text-main)">2) Understand</h3>
+                        <p class="mt-2 text-sm" style="color: var(--text-muted)">
                             Extract themes and align them to curriculum topics so recommendations stay explainable.
                         </p>
                     </div>
                     <div>
-                        <h3 class="font-semibold" style="color: var(--text)">3) Recommend</h3>
-                        <p class="mt-2 text-sm" style="color: var(--muted)">
+                        <h3 class="font-semibold" style="color: var(--text-main)">3) Recommend</h3>
+                        <p class="mt-2 text-sm" style="color: var(--text-muted)">
                             Hybrid retrieval (structured filters + vector similarity) to surface the best practice set.
                         </p>
                     </div>
@@ -100,13 +97,13 @@
 
 
     <section class="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="ai-surface rounded-2xl p-8">
-            <h2 class="text-xl font-semibold" style="color: var(--text)">What we’ve built ✅</h2>
-            <p class="mt-3" style="color: var(--muted)">
+        <div class="ai-surface rounded-2xl p-8 shadow-sm">
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">What we’ve built ✅</h2>
+            <p class="mt-3" style="color: var(--text-muted)">
                 A working end-to-end flow: lecture ingestion → theme extraction → problem discovery.
                 Recommendations are live from the vector store, and problem pages are LaTeX-ready for clean STEM formatting.
             </p>
-            <ul class="mt-5 space-y-2 text-sm" style="color: var(--muted)">
+            <ul class="mt-5 space-y-2 text-sm" style="color: var(--text-muted)">
                 <li>• Lecture processing pipeline with extracted themes and lecture pages.</li>
                 <li>• Large dataset oriented for university-level students.</li>
                 <li>• Problem library with topic/subtopic/difficulty and detailed views.</li>
@@ -117,62 +114,62 @@
         </div>
 
         <div class="ai-surface rounded-2xl p-8">
-            <h2 class="text-xl font-semibold" style="color: var(--text)">Core tools 🧰</h2>
-            <p class="mt-3" style="color: var(--muted)">
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">Core tools 🧰</h2>
+            <p class="mt-3" style="color: var(--text-muted)">
                 This prototype is intentionally simple to deploy, inspect, and evolve.
             </p>
             <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">Backend</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">Kotlin, Spring Boot (MVC), JPA/Hibernate</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">Backend</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">Kotlin, Spring Boot (MVC), JPA/Hibernate</p>
                 </div>
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">Data</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">PostgreSQL, pgvector, Flyway migrations</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">Data</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">PostgreSQL, pgvector, Flyway migrations</p>
                 </div>
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">AI models</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">DeepSeek via Ollama (cloud) + Nomic embeddings (local)</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">AI models</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">DeepSeek via Ollama (cloud) + Nomic embeddings (local)</p>
                 </div>
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">UI</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">Thymeleaf, Tailwind (CDN), Alpine.js</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">UI</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">Thymeleaf, Tailwind (CDN), Alpine.js</p>
                 </div>
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">Transcription</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">AssemblyAI for video/audio ingestion</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">Transcription</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">AssemblyAI for video/audio ingestion</p>
                 </div>
                 <div class="ai-surface-solid rounded-xl p-4">
-                    <p class="text-sm font-medium" style="color: var(--text)">Math rendering</p>
-                    <p class="mt-1 text-sm" style="color: var(--muted)">MathJax (LaTeX) for statements/solutions</p>
+                    <p class="text-sm font-medium" style="color: var(--text-main)">Math rendering</p>
+                    <p class="mt-1 text-sm" style="color: var(--text-muted)">MathJax (LaTeX) for statements/solutions</p>
                 </div>
             </div>
         </div>
     </section>
 
     <section class="mt-6 ai-surface rounded-2xl p-8">
-        <h2 class="text-xl font-semibold" style="color: var(--text)">Why now</h2>
-        <p class="mt-3" style="color: var(--muted)">
+        <h2 class="text-xl font-semibold" style="color: var(--text-main)">Why now</h2>
+        <p class="mt-3" style="color: var(--text-muted)">
             The last year made high-quality reasoning models accessible, but STEM learning still suffers from low-signal practice and generic chat answers.
-            Universities and tutors need a workflow that is <span style="color: var(--text)">curated, explainable, and measurable</span> — not just conversational.
+            Universities and tutors need a workflow that is <span style="color: var(--text-main)">curated, explainable, and measurable</span> — not just conversational.
         </p>
 
         <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="ai-surface-solid rounded-xl p-5">
-                <p class="text-sm font-medium" style="color: var(--text)">Model capability</p>
-                <p class="mt-2 text-sm" style="color: var(--muted)">
+                <p class="text-sm font-medium" style="color: var(--text-main)">Model capability</p>
+                <p class="mt-2 text-sm" style="color: var(--text-muted)">
                     DeepSeek-class models make topic-level understanding and generation viable for real coursework.
                 </p>
             </div>
             <div class="ai-surface-solid rounded-xl p-5">
-                <p class="text-sm font-medium" style="color: var(--text)">Retrieval is the differentiator</p>
-                <p class="mt-2 text-sm" style="color: var(--muted)">
+                <p class="text-sm font-medium" style="color: var(--text-main)">Retrieval is the differentiator</p>
+                <p class="mt-2 text-sm" style="color: var(--text-muted)">
                     Students don’t want more chat — they want the right problem set. Vector search + curriculum tags creates repeatable relevance.
                 </p>
             </div>
             <div class="ai-surface-solid rounded-xl p-5">
-                <p class="text-sm font-medium" style="color: var(--text)">Institutions care about outcomes</p>
-                <p class="mt-2 text-sm" style="color: var(--muted)">
+                <p class="text-sm font-medium" style="color: var(--text-main)">Institutions care about outcomes</p>
+                <p class="mt-2 text-sm" style="color: var(--text-muted)">
                     With auth + test users, we can measure engagement and mastery improvements instead of guessing.
                 </p>
             </div>
@@ -181,49 +178,49 @@
 
     <section class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="ai-surface rounded-2xl p-8">
-            <h2 class="text-xl font-semibold" style="color: var(--text)">Roadmap (next) 📍</h2>
-            <p class="mt-3" style="color: var(--muted)">
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">Roadmap (next) 📍</h2>
+            <p class="mt-3" style="color: var(--text-muted)">
                 What we plan to build after the prototype phase.
             </p>
-            <ol class="mt-5 space-y-3 text-sm" style="color: var(--muted)">
+            <ol class="mt-5 space-y-3 text-sm" style="color: var(--text-muted)">
                 <li>
-                    <span class="font-medium" style="color: var(--text)">1) Better datasets</span>
+                    <span class="font-medium" style="color: var(--text-main)">1) Better datasets</span>
                     — expand coverage, improve tagging, and raise university-course relevance.
                 </li>
                 <li>
-                    <span class="font-medium" style="color: var(--text)">2) Authentication</span>
+                    <span class="font-medium" style="color: var(--text-main)">2) Authentication</span>
                     — user accounts, saved progress, and tutor/student workflows.
                 </li>
                 <li>
-                    <span class="font-medium" style="color: var(--text)">3) Find test users</span>
+                    <span class="font-medium" style="color: var(--text-main)">3) Find test users</span>
                     — onboard early students/tutors and iterate with usage feedback.
                 </li>
                 <li>
-                    <span class="font-medium" style="color: var(--text)">4) Topic-specific task generation</span>
+                    <span class="font-medium" style="color: var(--text-main)">4) Topic-specific task generation</span>
                     — secure resources to fine-tune a newer DeepSeek model to generate high-quality tasks per topic.
                 </li>
             </ol>
         </div>
 
         <div class="ai-surface rounded-2xl p-8">
-            <h2 class="text-xl font-semibold" style="color: var(--text)">STEM-first presentation</h2>
-            <p class="mt-3" style="color: var(--muted)">
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">STEM-first presentation</h2>
+            <p class="mt-3" style="color: var(--text-muted)">
                 LaTeX rendering keeps math readable in both problem statements and solutions.
             </p>
-            <div class="mt-5 p-4 rounded-xl" style="background: rgba(2,6,23,0.35); border: 1px solid var(--border)">
-                <p class="text-sm" style="color: var(--muted)">Demo snippet</p>
-                <p class="mt-2" style="color: var(--text)">Solve: $\\int_0^1 x^2 \\; dx$</p>
-                <p class="mt-2" style="color: var(--text)">Answer: $\\frac{1}{3}$</p>
+            <div class="mt-5 p-4 rounded-xl" style="background: var(--bg-main); border: 1px solid var(--border)">
+                <p class="text-sm" style="color: var(--text-muted)">Demo snippet</p>
+                <p class="mt-2" style="color: var(--text-main)">Solve: $\int_0^1 x^2 \; dx$</p>
+                <p class="mt-2" style="color: var(--text-main)">Answer: $\frac{1}{3}$</p>
             </div>
 
             <div class="mt-6 flex flex-wrap gap-2">
-                <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(56,189,248,0.12); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.22)">
+                <span class="px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-100">
                     Explainable themes
                 </span>
-                <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.22)">
+                <span class="px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700 border border-purple-100">
                     Hybrid retrieval
                 </span>
-                <span class="px-3 py-1 rounded-full text-sm" style="background: rgba(229,231,235,0.08); color: var(--text); border: 1px solid var(--border)">
+                <span class="px-3 py-1 rounded-full text-sm bg-gray-50 text-gray-700 border border-gray-200">
                     Local-first demos
                 </span>
             </div>
@@ -231,21 +228,18 @@
     </section>
 
     <section class="mt-10 ai-surface rounded-2xl overflow-hidden">
-        <div class="p-8 sm:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
-             style="background: linear-gradient(90deg, rgba(56,189,248,0.10), rgba(167,139,250,0.10)); border: 1px solid var(--border)">
+        <div class="p-8 sm:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-t border-gray-100 bg-gray-50/50">
             <div>
-                <h2 class="text-2xl font-semibold" style="color: var(--text)">Want a quick demo?</h2>
-                <p class="mt-2" style="color: var(--muted)">
+                <h2 class="text-2xl font-semibold" style="color: var(--text-main)">Want a quick demo?</h2>
+                <p class="mt-2" style="color: var(--text-muted)">
                     Start from a lecture, watch themes appear, then open recommended problems with LaTeX-ready solutions.
                 </p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="/lectures/new" class="px-5 py-3 rounded-lg font-medium ai-glow"
-                   style="background: rgba(56,189,248,0.16); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.35)">
+                <a href="/lectures/new" class="px-5 py-3 rounded-lg font-medium shadow-sm bg-blue-600 text-white hover:bg-blue-700 transition">
                     Add a lecture
                 </a>
-                <a href="/problems" class="px-5 py-3 rounded-lg font-medium"
-                   style="background: rgba(2,6,23,0.30); color: var(--text); border: 1px solid var(--border)">
+                <a href="/problems" class="px-5 py-3 rounded-lg font-medium shadow-sm bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
                     Browse the library
                 </a>
             </div>

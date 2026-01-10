@@ -50,15 +50,15 @@
 
     <div class="ai-surface rounded-lg p-10 text-center">
         <div class="flex flex-col items-center space-y-4">
-            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <h2 class="text-xl font-semibold" style="color: var(--text)">Processing your lecture...</h2>
-            <p style="color: var(--muted)">This can take up to a minute on first run. The page will refresh automatically.</p>
-            <div th:if="${lecture.errorMessage}" class="mt-6 p-4 rounded-lg max-w-xl text-left" style="background: rgba(248, 113, 113, 0.10); border: 1px solid rgba(248, 113, 113, 0.25)">
-                <h3 class="text-sm font-medium" style="color: #fca5a5">Previous Error</h3>
-                <p class="mt-1 text-sm" style="color: rgba(252, 165, 165, 0.9)" th:text="${lecture.errorMessage}">Error message</p>
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">Processing your lecture...</h2>
+            <p style="color: var(--text-muted)">This can take up to a minute on first run. The page will refresh automatically.</p>
+            <div th:if="${lecture.errorMessage}" class="mt-6 p-4 rounded-lg max-w-xl text-left border border-red-200 bg-red-50 text-red-700">
+                <h3 class="text-sm font-medium">Previous Error</h3>
+                <p class="mt-1 text-sm" th:text="${lecture.errorMessage}">Error message</p>
             </div>
         </div>
     </div>

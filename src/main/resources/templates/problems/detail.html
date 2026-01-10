@@ -14,38 +14,40 @@
     </div>
 
     <!-- Problem Card -->
-    <div class="ai-surface rounded-lg overflow-hidden ai-glow">
+    <div class="ai-surface rounded-lg overflow-hidden shadow-sm">
         <!-- Header -->
-        <div class="p-6 text-white" style="background: linear-gradient(90deg, rgba(56,189,248,0.22), rgba(167,139,250,0.22)); border-bottom: 1px solid var(--border)">
+        <div class="p-6 bg-white border-b ai-border">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium" th:text="${problem.topic}">Algebra</span>
-                    <span th:if="${problem.subtopic}" class="px-3 py-1 bg-white/10 rounded-full text-sm" th:text="${problem.subtopic}">Subtopic</span>
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-sm font-medium" th:text="${problem.topic}">Algebra</span>
+                    <span th:if="${problem.subtopic}" class="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-200 rounded-full text-sm" th:text="${problem.subtopic}">Subtopic</span>
                 </div>
                 <div th:if="${problem.difficulty}" class="flex items-center space-x-1">
-                    <span class="text-sm">Difficulty:</span>
+                    <span class="text-sm text-gray-500">Difficulty:</span>
                     <span th:each="i : ${#numbers.sequence(1,5)}">
-                        <svg th:if="${i <= problem.difficulty}" class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                        <svg th:if="${i <= problem.difficulty}" class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                         </svg>
-                        <svg th:unless="${i <= problem.difficulty}" class="w-5 h-5 text-white/30" fill="currentColor" viewBox="0 0 20 20">
+                        <svg th:unless="${i <= problem.difficulty}" class="w-5 h-5 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                         </svg>
                     </span>
                 </div>
             </div>
-            <div th:if="${problem.sourceId}" class="mt-4 text-white/70 text-sm">
+            <div th:if="${problem.sourceId}" class="mt-4 text-gray-500 text-sm">
                 Problem ID: <span th:text="${problem.sourceId}">math_001</span>
             </div>
         </div>
 
         <!-- Problem Statement -->
         <div class="p-6" style="border-bottom: 1px solid var(--border)">
-            <h2 class="text-lg font-semibold mb-4" style="color: var(--text)">Problem Statement</h2>
-            <div class="prose prose-indigo max-w-none">
-                <!-- Use a single block container so MathJax can typeset across line breaks -->
-                <div class="whitespace-pre-wrap" style="color: var(--text)" th:text="${problem.statement}">
-                    Problem statement goes here...
+            <h2 class="text-lg font-semibold mb-4" style="color: var(--text-main)">Problem Statement</h2>
+            <div class="prose max-w-none">
+                <!-- Hidden raw content -->
+                <div id="problem-statement-raw" style="display: none" th:text="${problem.statement}"></div>
+                <!-- Rendered target -->
+                <div id="problem-statement" class="whitespace-pre-wrap" style="color: var(--text-main)">
+                    <p class="text-sm italic" style="color: var(--text-muted)">Loading statement...</p>
                 </div>
             </div>
         </div>
@@ -53,29 +55,32 @@
         <!-- Solution Section (Collapsible) -->
         <div class="p-6" x-data="{ showSolution: false }">
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold" style="color: var(--text)">Solution</h2>
+                <h2 class="text-lg font-semibold" style="color: var(--text-main)">Solution</h2>
                 <button
-                        @click="showSolution = !showSolution; if (showSolution) { $nextTick(() => { if (window.typesetMath) window.typesetMath(); else if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise(); }); }"
-                        class="px-4 py-2 text-sm font-medium rounded-md transition ring-1 ring-white/10"
-                        :class="showSolution ? 'bg-white/5 text-white/80 hover:bg-white/10' : 'bg-sky-400/15 text-sky-200 hover:bg-sky-400/20'">
+                        @click="showSolution = !showSolution; if (showSolution) { $nextTick(() => renderProblemSolution()); }"
+                        class="px-4 py-2 text-sm font-medium rounded-md transition shadow-sm border border-gray-200"
+                        :class="showSolution ? 'bg-gray-50 text-gray-700 hover:bg-gray-100' : 'bg-blue-600 text-white hover:bg-blue-700'">
                     <span x-show="!showSolution">Show Solution</span>
                     <span x-show="showSolution">Hide Solution</span>
                 </button>
             </div>
             <div x-show="showSolution" x-transition class="mt-4">
-                <div class="ai-surface-solid rounded-lg p-6">
-                    <div th:if="${problem.solution}" class="prose prose-indigo max-w-none">
-                        <div class="whitespace-pre-wrap" style="color: var(--text)" th:text="${problem.solution}">
-                            Solution goes here...
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
+                    <div th:if="${problem.solution}" class="prose max-w-none">
+                        <!-- Hidden raw content -->
+                        <div id="problem-solution-raw" style="display: none" th:text="${problem.solution}"></div>
+                        <!-- Rendered target -->
+                        <div id="problem-solution" class="whitespace-pre-wrap" style="color: var(--text-main)">
+                            <p class="text-sm italic" style="color: var(--text-muted)">Loading solution...</p>
                         </div>
                     </div>
-                    <p th:unless="${problem.solution}" class="italic" style="color: var(--muted)">
+                    <p th:unless="${problem.solution}" class="italic" style="color: var(--text-muted)">
                         No solution available for this problem.
                     </p>
                 </div>
-                <div th:if="${problem.answer}" class="mt-4 p-4 rounded-lg" style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.20)">
-                    <span class="text-sm font-medium" style="color: var(--text)">Answer: </span>
-                    <span class="font-mono" style="color: var(--neon-blue)" th:text="${problem.answer}">42</span>
+                <div th:if="${problem.answer}" class="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                    <span class="text-sm font-medium" style="color: var(--text-main)">Answer: </span>
+                    <span class="font-mono" style="color: var(--accent-blue)" th:text="${problem.answer}">42</span>
                 </div>
             </div>
         </div>
@@ -87,14 +92,14 @@
 
     <!-- Related Problems (if available) -->
     <div th:if="${not #lists.isEmpty(relatedProblems)}" class="mt-8">
-        <h2 class="text-xl font-bold mb-4" style="color: var(--text)">Related Problems</h2>
+        <h2 class="text-xl font-bold mb-4" style="color: var(--text-main)">Related Problems</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <a th:each="related : ${relatedProblems}" 
                th:href="@{/problems/{id}(id=${related.id})}"
-               class="ai-surface rounded-lg p-4 transition ai-glow">
-                <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)"
+               class="ai-surface rounded-lg p-4 transition shadow-sm card-hover">
+                <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: #F5F3FF; color: var(--accent-violet); border: 1px solid #DDD6FE"
                       th:text="${related.topic}">Topic</span>
-                <p class="mt-2 text-sm line-clamp-3" style="color: var(--muted)" th:text="${related.statement}">
+                <p class="mt-2 text-sm line-clamp-3" style="color: var(--text-muted)" th:text="${related.statement}">
                     Related problem statement...
                 </p>
             </a>
@@ -102,26 +107,97 @@
     </div>
 
     <!-- Ensure MathJax typesets even if the page loads before MathJax finishes initializing -->
-    <script th:inline="none">
+    <script th:inline="javascript">
         (function () {
-            const tryTypeset = () => {
-                if (window.typesetMath) return window.typesetMath();
-                if (window.MathJax?.typesetPromise) return window.MathJax.typesetPromise();
+            function normalizeMathDelimiters(text) {
+                return text
+                    .replace(/\\\[/g, '$$')
+                    .replace(/\\\]/g, '$$')
+                    .replace(/\\\(/g, '$')
+                    .replace(/\\\)/g, '$');
+            }
+
+            function protectMath(text) {
+                const math = [];
+                let i = 0;
+                // Protect display math $$...$$
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
+                    math.push(`$$${m}$$`);
+                    return `@@MATH${i++}@@`;
+                });
+                // Protect inline math $...$
+                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
+                    math.push(`$${m}$`);
+                    return `@@MATH${i++}@@`;
+                });
+                return { text, math };
+            }
+
+            function restoreMath(html, math) {
+                return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
+            }
+
+            function renderMarkdown(rawId, targetId) {
+                const rawEl = document.getElementById(rawId);
+                const targetEl = document.getElementById(targetId);
+                if (!rawEl || !targetEl) return;
+
+                const content = rawEl.textContent;
+                if (content && content.trim().length > 0) {
+                    try {
+                        if (window.marked && window.marked.parse) {
+                            const normalized = normalizeMathDelimiters(content);
+                            const { text, math } = protectMath(normalized);
+                            let html = marked.parse(text);
+                            html = restoreMath(html, math);
+                            targetEl.innerHTML = html;
+                        } else {
+                            targetEl.innerHTML = content;
+                        }
+                    } catch (err) {
+                        console.error('Error rendering markdown:', err);
+                        targetEl.textContent = content;
+                    }
+                } else {
+                    targetEl.innerHTML = '';
+                }
+            }
+
+            function typeset() {
+                if (window.MathJax?.typesetPromise) {
+                    window.MathJax.typesetPromise().catch((err) => console.error('MathJax typeset failed:', err));
+                } else if (window.typesetMath) {
+                    window.typesetMath();
+                }
+            }
+
+            window.renderProblemSolution = function() {
+                renderMarkdown('problem-solution-raw', 'problem-solution');
+                typeset();
             };
 
-            // Run immediately (best-effort) and then retry a few times in case MathJax loads late.
-            tryTypeset();
+            function init() {
+                renderMarkdown('problem-statement-raw', 'problem-statement');
+                typeset();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            // Retry typeset a few times in case MathJax loads late.
             let left = 10;
             const id = setInterval(() => {
                 left -= 1;
-                const done = !!window.MathJax?.typesetPromise;
-                if (done) {
-                    tryTypeset();
+                if (window.MathJax?.typesetPromise) {
+                    typeset();
                     clearInterval(id);
                 } else if (left <= 0) {
                     clearInterval(id);
                 }
-            }, 250);
+            }, 500);
         })();
     </script>
 </div>

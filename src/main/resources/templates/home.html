@@ -5,50 +5,50 @@
 <div th:fragment="content">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold" style="color: var(--text)">Dashboard</h1>
-        <p class="mt-2" style="color: var(--muted)">Analyze lecture transcripts and find relevant math problems</p>
+        <h1 class="text-3xl font-bold" style="color: var(--text-main)">Dashboard</h1>
+        <p class="mt-2" style="color: var(--text-muted)">Analyze lecture transcripts and find relevant math problems</p>
     </div>
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="ai-surface rounded-lg p-6 card-hover transition-all duration-200">
+    <div class="ai-surface rounded-lg p-6 shadow-sm card-hover transition-all duration-200">
             <div class="flex items-center">
-        <div class="p-3 rounded-full" style="background: rgba(56,189,248,0.12); color: var(--neon-blue)">
+        <div class="p-3 rounded-full" style="background: #EFF6FF; color: var(--accent-blue)">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium" style="color: var(--muted)">Total Lectures</p>
-                    <p class="text-2xl font-semibold" style="color: var(--text)" th:text="${lectureCount}">0</p>
+                    <p class="text-sm font-medium" style="color: var(--text-muted)">Total Lectures</p>
+                    <p class="text-2xl font-semibold" style="color: var(--text-main)" th:text="${lectureCount}">0</p>
                 </div>
             </div>
         </div>
 
-    <div class="ai-surface rounded-lg p-6 card-hover transition-all duration-200">
+    <div class="ai-surface rounded-lg p-6 shadow-sm card-hover transition-all duration-200">
             <div class="flex items-center">
-        <div class="p-3 rounded-full" style="background: rgba(167,139,250,0.12); color: var(--violet)">
+        <div class="p-3 rounded-full" style="background: #F5F3FF; color: var(--accent-violet)">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium" style="color: var(--muted)">Math Problems</p>
-                    <p class="text-2xl font-semibold" style="color: var(--text)" th:text="${problemCount}">0</p>
+                    <p class="text-sm font-medium" style="color: var(--text-muted)">Math Problems</p>
+                    <p class="text-2xl font-semibold" style="color: var(--text-main)" th:text="${problemCount}">0</p>
                 </div>
             </div>
         </div>
 
-    <div class="ai-surface rounded-lg p-6 card-hover transition-all duration-200">
+    <div class="ai-surface rounded-lg p-6 shadow-sm card-hover transition-all duration-200">
             <div class="flex items-center">
-        <div class="p-3 rounded-full" style="background: rgba(229,231,235,0.10); color: var(--text)">
+        <div class="p-3 rounded-full" style="background: #F8FAFC; color: var(--text-main)">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium" style="color: var(--muted)">Topics</p>
-                    <p class="text-2xl font-semibold" style="color: var(--text)" th:text="${topicCount}">0</p>
+                    <p class="text-sm font-medium" style="color: var(--text-muted)">Topics</p>
+                    <p class="text-2xl font-semibold" style="color: var(--text-main)" th:text="${topicCount}">0</p>
                 </div>
             </div>
         </div>
@@ -57,60 +57,57 @@
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- New Lecture Card -->
-        <div class="ai-surface rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b ai-border" style="background: rgba(15,23,42,0.92)">
-                <h2 class="text-xl font-semibold" style="color: var(--text)">Analyze New Lecture</h2>
-                <p class="text-sm mt-1" style="color: var(--muted)">Turn transcripts into themes and recommendations.</p>
+        <div class="ai-surface rounded-lg overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b ai-border" style="background: var(--bg-surface)">
+                <h2 class="text-xl font-semibold" style="color: var(--text-main)">Analyze New Lecture</h2>
+                <p class="text-sm mt-1" style="color: var(--text-muted)">Turn transcripts into themes and recommendations.</p>
             </div>
             <div class="p-6">
                 <form action="/lectures/create" method="post" enctype="multipart/form-data" class="space-y-4">
                     <div>
-                        <label for="title" class="block text-sm font-medium" style="color: var(--muted)">Lecture Title</label>
+                        <label for="title" class="block text-sm font-medium" style="color: var(--text-muted)">Lecture Title</label>
                         <input type="text" id="title" name="title" required
-                               class="mt-1 block w-full rounded-md border ai-border bg-transparent shadow-sm sm:text-sm p-2"
-                               style="color: var(--text)"
+                               class="mt-1 block w-full rounded-md border ai-border bg-white shadow-sm sm:text-sm p-2"
+                               style="color: var(--text-main)"
                                placeholder="e.g., Introduction to Calculus">
                     </div>
 
                     <div x-data="{ uploadType: 'text' }">
-                        <label class="block text-sm font-medium mb-2" style="color: var(--muted)">Lecture Content Source</label>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-muted)">Lecture Content Source</label>
                         <div class="flex space-x-4 mb-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" x-model="uploadType" value="text" class="form-radio" style="color: var(--neon-blue)">
-                                <span class="ml-2" style="color: var(--text)">Text Transcript</span>
+                                <input type="radio" x-model="uploadType" value="text" class="form-radio" style="color: var(--accent-blue)">
+                                <span class="ml-2" style="color: var(--text-main)">Text Transcript</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" x-model="uploadType" value="video" class="form-radio" style="color: var(--neon-blue)">
-                                <span class="ml-2" style="color: var(--text)">Video File</span>
+                                <input type="radio" x-model="uploadType" value="video" class="form-radio" style="color: var(--accent-blue)">
+                                <span class="ml-2" style="color: var(--text-main)">Video File</span>
                             </label>
                         </div>
 
                         <div x-show="uploadType === 'text'">
-                            <label for="transcript" class="block text-sm font-medium" style="color: var(--muted)">Lecture Transcript</label>
+                            <label for="transcript" class="block text-sm font-medium" style="color: var(--text-muted)">Lecture Transcript</label>
                             <textarea id="transcript" name="transcript" rows="6" :required="uploadType === 'text'"
-                                      class="mt-1 block w-full rounded-md border ai-border bg-transparent shadow-sm sm:text-sm border p-2"
-                                      style="color: var(--text)"
+                                      class="mt-1 block w-full rounded-md border ai-border bg-white shadow-sm sm:text-sm border p-2"
+                                      style="color: var(--text-main)"
                                       placeholder="Paste or type the lecture transcript here..."></textarea>
                         </div>
 
                         <div x-show="uploadType === 'video'">
-                            <label for="video" class="block text-sm font-medium" style="color: var(--muted)">Upload Video</label>
+                            <label for="video" class="block text-sm font-medium" style="color: var(--text-muted)">Upload Video</label>
                             <input type="file" id="video" name="video" accept="video/*,audio/*" :required="uploadType === 'video'"
-                                   class="mt-1 block w-full text-sm" style="color: var(--muted)">
+                                   class="mt-1 block w-full text-sm" style="color: var(--text-muted)">
                         </div>
                     </div>
 
                     <div class="flex justify-end space-x-3">
                         <button type="submit" name="action" value="save"
-                                class="px-4 py-2 rounded-md transition ring-1 ring-white/10 hover:bg-white/5"
-                                style="color: var(--text); background: rgba(2,6,23,0.35)">
+                                class="px-4 py-2 rounded-md transition border border-gray-200 bg-white hover:bg-gray-50"
+                                style="color: var(--text-main)">
                             Save Draft
                         </button>
                         <button type="submit" name="action" value="analyze"
-                                class="px-4 py-2 rounded-md transition"
-                                style="background: rgba(56,189,248,0.16); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.35)"
-                                onmouseover="this.style.background='rgba(56,189,248,0.22)'"
-                                onmouseout="this.style.background='rgba(56,189,248,0.16)'">
+                                class="px-4 py-2 rounded-md transition shadow-sm bg-blue-600 text-white hover:bg-blue-700">
                             Analyze & Find Problems
                         </button>
                     </div>
@@ -119,21 +116,21 @@
         </div>
 
         <!-- Recent Lectures -->
-        <div class="ai-surface rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b ai-border" style="background: rgba(15,23,42,0.92)">
-                <h2 class="text-xl font-semibold" style="color: var(--text)">Recent Lectures</h2>
+        <div class="ai-surface rounded-lg overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b ai-border" style="background: var(--bg-surface)">
+                <h2 class="text-xl font-semibold" style="color: var(--text-main)">Recent Lectures</h2>
             </div>
-            <div class="divide-y">
-                <div th:if="${#lists.isEmpty(recentLectures)}" class="p-6 text-center" style="color: var(--muted)">
+            <div class="divide-y divide-gray-100">
+                <div th:if="${#lists.isEmpty(recentLectures)}" class="p-6 text-center" style="color: var(--text-muted)">
                     No lectures yet. Create your first one!
                 </div>
                 <a th:each="lecture : ${recentLectures}" 
                    th:href="@{/lectures/{id}(id=${lecture.id})}"
-                   class="block p-4 transition hover:bg-white/5">
+                   class="block p-4 transition hover:bg-black/5">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-medium" style="color: var(--text)" th:text="${lecture.title}">Lecture Title</p>
-                            <p class="text-sm" style="color: var(--muted)">
+                            <p class="font-medium" style="color: var(--text-main)" th:text="${lecture.title}">Lecture Title</p>
+                            <p class="text-sm" style="color: var(--text-muted)">
                                 <span th:text="${#temporals.format(lecture.createdAt, 'MMM d, yyyy')}">Date</span>
                                 •
                                 <span th:if="${lecture.uploadedBy}" th:text="'by ' + ${lecture.uploadedBy}">by User</span>
@@ -144,8 +141,8 @@
                     </div>
                 </a>
             </div>
-            <div class="px-6 py-3 border-t ai-border" style="background: rgba(15,23,42,0.92)">
-                <a href="/lectures" class="text-sm font-medium" style="color: var(--neon-blue)">
+            <div class="px-6 py-3 border-t ai-border" style="background: var(--bg-surface)">
+                <a href="/lectures" class="text-sm font-medium" style="color: var(--accent-blue)">
                     View all lectures →
                 </a>
             </div>
@@ -153,19 +150,16 @@
     </div>
 
     <!-- Topics Overview -->
-    <div class="mt-8 ai-surface rounded-lg overflow-hidden" th:if="${not #lists.isEmpty(topics)}">
-        <div class="px-6 py-4 border-b ai-border" style="background: rgba(15,23,42,0.92)">
-            <h2 class="text-xl font-semibold" style="color: var(--text)">Available Topics</h2>
+    <div class="mt-8 ai-surface rounded-lg overflow-hidden shadow-sm" th:if="${not #lists.isEmpty(topics)}">
+        <div class="px-6 py-4 border-b ai-border" style="background: var(--bg-surface)">
+            <h2 class="text-xl font-semibold" style="color: var(--text-main)">Available Topics</h2>
         </div>
         <div class="p-6">
             <div class="flex flex-wrap gap-2">
                 <a th:each="topic : ${topics}" 
                    th:href="@{/problems(topic=${topic})}"
                    th:text="${topic}"
-                   class="px-3 py-1 rounded-full text-sm font-medium transition"
-                   style="background: rgba(56,189,248,0.12); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.22)"
-                   onmouseover="this.style.background='rgba(56,189,248,0.18)'"
-                   onmouseout="this.style.background='rgba(56,189,248,0.12)'">
+                   class="px-3 py-1 rounded-full text-sm font-medium transition bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100">
                     Topic
                 </a>
             </div>

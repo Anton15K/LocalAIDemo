@@ -43,6 +43,12 @@ class WebController(
     @GetMapping("/")
     fun landing(model: Model): String {
         populateLandingCounts(model)
+        return "landing_v2"
+    }
+
+    @GetMapping("/v1")
+    fun landingV1(model: Model): String {
+        populateLandingCounts(model)
         return "landing"
     }
 

@@ -46,46 +46,55 @@
         }
 
         :root {
-            --near-black: #020617;
-            --dark-slate: #0F172A;
-            --neon-blue: #38BDF8;
-            --violet: #A78BFA;
-            --text: #E5E7EB;
-            --muted: rgba(229, 231, 235, 0.75);
-            --border: rgba(229, 231, 235, 0.12);
+            --bg-main: #F8FAFC;
+            --bg-surface: #FFFFFF;
+            --primary: #2563EB;
+            --secondary: #7C3AED;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --accent-blue: #3B82F6;
+            --accent-violet: #8B5CF6;
+            
+            /* Aliases for legacy/convenience */
+            --text: var(--text-main);
+            --muted: var(--text-muted);
         }
 
         body {
-            background: radial-gradient(1200px 800px at 20% 10%, rgba(56, 189, 248, 0.10), transparent 55%),
-                        radial-gradient(900px 700px at 80% 0%, rgba(167, 139, 250, 0.10), transparent 60%),
-                        var(--near-black);
-            color: var(--text);
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
         }
 
         /* Accent utilities */
-        .ai-accent { color: var(--neon-blue); }
-        .ai-accent-violet { color: var(--violet); }
+        .ai-accent { color: var(--accent-blue); }
+        .ai-accent-violet { color: var(--accent-violet); }
         .ai-border { border-color: var(--border); }
-        .ai-surface { background: rgba(15, 23, 42, 0.72); border: 1px solid var(--border); }
-        .ai-surface-solid { background: var(--dark-slate); border: 1px solid var(--border); }
-        .ai-glow:hover { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25), 0 10px 30px rgba(2, 6, 23, 0.65); }
+        .ai-surface { background: var(--bg-surface); border: 1px solid var(--border); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        .ai-surface-solid { background: var(--bg-surface); border: 1px solid var(--border); }
+        .ai-glow:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 
         .card-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18), 0 18px 40px rgba(2, 6, 23, 0.70);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            transition: all 0.2s ease-in-out;
         }
 
-        /* Status pills tuned for dark UI */
-        .status-pending { background-color: rgba(56, 189, 248, 0.10); color: var(--neon-blue); border: 1px solid rgba(56,189,248,0.25); }
-        .status-processing { background-color: rgba(167, 139, 250, 0.10); color: var(--violet); border: 1px solid rgba(167,139,250,0.25); }
-        .status-completed { background-color: rgba(229, 231, 235, 0.08); color: var(--text); border: 1px solid var(--border); }
-        .status-failed { background-color: rgba(248, 113, 113, 0.10); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.25); }
+        /* Status pills tuned for light UI */
+        .status-pending { background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+        .status-processing { background-color: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE; }
+        .status-completed { background-color: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; }
+        .status-failed { background-color: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
 
-        /* Make prose readable on dark background */
-        .prose { color: var(--text) !important; }
-        .prose :where(h1,h2,h3,h4,strong) { color: var(--text) !important; }
-        .prose :where(a) { color: var(--neon-blue) !important; }
-        .prose :where(code) { color: var(--text) !important; background: rgba(229,231,235,0.06); padding: 0.15rem 0.35rem; border-radius: 0.35rem; }
+        /* Make prose readable on light background */
+        .prose { color: var(--text-main) !important; max-width: none; }
+        .prose :where(h1,h2,h3,h4,strong) { color: #0F172A !important; }
+        .prose :where(a) { color: var(--primary) !important; }
+        .prose :where(code) { color: #DB2777 !important; background: #FDF2F8; padding: 0.15rem 0.35rem; border-radius: 0.35rem; }
+        .prose :where(blockquote) { border-left-color: var(--border); color: var(--text-muted); }
     </style>
 
     <!-- MathJax for LaTeX rendering -->
@@ -116,31 +125,31 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="/" class="flex items-center">
-                        <svg class="h-8 w-8" style="color: var(--neon-blue)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-8 w-8" style="color: var(--primary)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                         </svg>
-                        <span class="ml-2 text-xl font-bold" style="color: var(--text)">Erudit AI demo</span>
+                        <span class="ml-2 text-xl font-bold" style="color: var(--text-main)">Erudit AI demo</span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text)"
-                       th:classappend="${currentPage == 'landing'} ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text-main)"
+                       th:classappend="${currentPage == 'landing'} ? 'bg-black/5 ring-1 ring-black/10' : 'hover:bg-black/5'">
                         Landing
                     </a>
-                    <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text)"
-                       th:classappend="${currentPage == 'home'} ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'">
+                    <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text-main)"
+                       th:classappend="${currentPage == 'home'} ? 'bg-black/5 ring-1 ring-black/10' : 'hover:bg-black/5'">
                         Dashboard
                     </a>
-                    <a href="/lectures" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text)"
-                       th:classappend="${currentPage == 'lectures'} ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'">
+                    <a href="/lectures" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text-main)"
+                       th:classappend="${currentPage == 'lectures'} ? 'bg-black/5 ring-1 ring-black/10' : 'hover:bg-black/5'">
                         Lectures
                     </a>
-                    <a href="/problems" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text)"
-                       th:classappend="${currentPage == 'problems'} ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'">
+                    <a href="/problems" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text-main)"
+                       th:classappend="${currentPage == 'problems'} ? 'bg-black/5 ring-1 ring-black/10' : 'hover:bg-black/5'">
                         Problems
                     </a>
-                    <a href="/admin" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text)"
-                       th:classappend="${currentPage == 'admin'} ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'">
+                    <a href="/admin" class="px-3 py-2 rounded-md text-sm font-medium" style="color: var(--text-main)"
+                       th:classappend="${currentPage == 'admin'} ? 'bg-black/5 ring-1 ring-black/10' : 'hover:bg-black/5'">
                         Admin
                     </a>
                 </div>
@@ -156,9 +165,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-auto border-t ai-border" style="background: rgba(2, 6, 23, 0.55)">
+    <footer class="mt-auto border-t ai-border" style="background: var(--bg-surface)">
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-sm" style="color: var(--muted)">
+            <p class="text-center text-sm" style="color: var(--text-muted)">
                 Erudit AI demo — Lecture Analysis & Problem Retrieval System
             </p>
         </div>

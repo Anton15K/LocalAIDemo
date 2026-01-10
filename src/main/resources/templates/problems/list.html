@@ -6,8 +6,8 @@
     <!-- Page Header -->
     <div class="flex justify-between items-center mb-8">
         <div>
-            <h1 class="text-3xl font-bold" style="color: var(--text)">Math Problems</h1>
-            <p class="mt-2" style="color: var(--muted)">Browse and search problems from the MATH dataset</p>
+            <h1 class="text-3xl font-bold" style="color: var(--text-main)">Math Problems</h1>
+            <p class="mt-2" style="color: var(--text-muted)">Browse and search problems from the MATH dataset</p>
         </div>
         <form action="/api/problems/sample" method="post" th:if="${problemCount == 0}">
             <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
@@ -17,27 +17,27 @@
     </div>
 
     <!-- Filters -->
-    <div class="ai-surface rounded-lg p-4 mb-6">
+    <div class="ai-surface rounded-lg p-4 mb-6 shadow-sm">
         <form action="/problems" method="get" class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
-                <label for="topic" class="block text-sm font-medium" style="color: var(--text)">Topic</label>
-                <select id="topic" name="topic" class="mt-1 block w-full rounded-md border p-2" style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)">
+                <label for="topic" class="block text-sm font-medium" style="color: var(--text-main)">Topic</label>
+                <select id="topic" name="topic" class="mt-1 block w-full rounded-md border p-2 bg-white" style="color: var(--text-main); border-color: var(--border)">
                     <option value="">All Topics</option>
                     <option th:each="t : ${topics}" th:value="${t}" th:text="${t}" th:selected="${t == selectedTopic}">Topic</option>
                 </select>
             </div>
             <div class="flex-1 min-w-[200px]">
-                <label for="difficulty" class="block text-sm font-medium" style="color: var(--text)">Difficulty</label>
-                <select id="difficulty" name="difficulty" class="mt-1 block w-full rounded-md border p-2" style="background: rgba(2,6,23,0.35); color: var(--text); border-color: var(--border)">
+                <label for="difficulty" class="block text-sm font-medium" style="color: var(--text-main)">Difficulty</label>
+                <select id="difficulty" name="difficulty" class="mt-1 block w-full rounded-md border p-2 bg-white" style="color: var(--text-main); border-color: var(--border)">
                     <option value="">All Levels</option>
                     <option th:each="i : ${#numbers.sequence(1,5)}" th:value="${i}" th:text="'Level ' + ${i}" th:selected="${i == selectedDifficulty}">Level</option>
                 </select>
             </div>
             <div>
-                <button type="submit" class="px-4 py-2 rounded-md transition ring-1 ring-white/10 ai-glow" style="background: rgba(56,189,248,0.16); color: var(--text)">
+                <button type="submit" class="px-4 py-2 rounded-md transition bg-blue-600 text-white hover:bg-blue-700 shadow-sm">
                     Filter
                 </button>
-                <a href="/problems" class="ml-2 px-4 py-2 rounded-md transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">
+                <a href="/problems" class="ml-2 px-4 py-2 rounded-md transition border border-gray-200 bg-white hover:bg-gray-50 shadow-sm" style="color: var(--text-main)">
                     Clear
                 </a>
             </div>
@@ -48,14 +48,14 @@
     <div th:if="${not #lists.isEmpty(topics)}" class="mb-6">
         <div class="flex flex-wrap gap-2">
             <a href="/problems" 
-               th:classappend="${selectedTopic == null} ? 'bg-sky-400/20 text-sky-200 ring-1 ring-sky-300/20' : 'bg-white/5 text-white/80 ring-1 ring-white/10 hover:bg-white/10'"
+               th:classappend="${selectedTopic == null} ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
                class="px-3 py-1 rounded-full text-sm font-medium transition">
                 All
             </a>
             <a th:each="t : ${topics}" 
                th:href="@{/problems(topic=${t})}"
                th:text="${t}"
-               th:classappend="${t == selectedTopic} ? 'bg-sky-400/20 text-sky-200 ring-1 ring-sky-300/20' : 'bg-white/5 text-white/80 ring-1 ring-white/10 hover:bg-white/10'"
+               th:classappend="${t == selectedTopic} ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
                class="px-3 py-1 rounded-full text-sm font-medium transition">
                 Topic
             </a>
@@ -63,12 +63,12 @@
     </div>
 
     <!-- Problems Grid -->
-    <div th:if="${#lists.isEmpty(problems.content)}" class="ai-surface rounded-lg p-12 text-center">
-        <svg class="mx-auto h-12 w-12" style="color: rgba(229,231,235,0.45)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div th:if="${#lists.isEmpty(problems.content)}" class="ai-surface rounded-lg p-12 text-center shadow-sm">
+        <svg class="mx-auto h-12 w-12" style="color: #94A3B8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
-        <h3 class="mt-2 text-sm font-medium" style="color: var(--text)">No problems found</h3>
-        <p class="mt-1 text-sm" style="color: var(--muted)">
+        <h3 class="mt-2 text-sm font-medium" style="color: var(--text-main)">No problems found</h3>
+        <p class="mt-1 text-sm" style="color: var(--text-muted)">
             <span th:if="${selectedTopic != null || selectedDifficulty != null}">Try adjusting your filters.</span>
             <span th:unless="${selectedTopic != null || selectedDifficulty != null}">Load sample problems to get started.</span>
         </p>
@@ -76,21 +76,23 @@
 
     <div th:unless="${#lists.isEmpty(problems.content)}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div th:each="problem : ${problems.content}" 
-             class="ai-surface rounded-lg overflow-hidden card-hover transition-all duration-200">
+             class="ai-surface rounded-lg overflow-hidden card-hover shadow-sm transition-all duration-200">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(167,139,250,0.12); color: var(--violet); border: 1px solid rgba(167,139,250,0.18)" 
+                    <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: #F5F3FF; color: var(--accent-violet); border: 1px solid #DDD6FE" 
                           th:text="${problem.topic}">Topic</span>
                     <span th:if="${problem.difficulty}" 
-                          class="text-sm" style="color: rgba(229,231,235,0.45)"
+                          class="text-sm" style="color: var(--text-muted)"
                           th:text="'Level ' + ${problem.difficulty}">Level 1</span>
                 </div>
-                <p class="line-clamp-4" style="color: var(--text)" th:text="${problem.statement}">Problem statement...</p>
+                <div class="markdown-content line-clamp-4" style="color: var(--text-main)" th:attr="data-raw=${problem.statement}">
+                    Loading problem...
+                </div>
                 <div th:if="${problem.subtopic}" class="mt-2">
-                    <span class="text-xs" style="color: var(--muted)" th:text="${problem.subtopic}">Subtopic</span>
+                    <span class="text-xs" style="color: var(--text-muted)" th:text="${problem.subtopic}">Subtopic</span>
                 </div>
             </div>
-            <div class="px-6 py-3" style="border-top: 1px solid var(--border); background: rgba(255,255,255,0.03)">
+            <div class="px-6 py-3" style="border-top: 1px solid var(--border); background: var(--bg-surface)">
                 <a th:href="@{/problems/{id}(id=${problem.id})}" 
                    class="ai-accent hover:opacity-90 text-sm font-medium">
                     View Solution →
@@ -101,7 +103,7 @@
 
     <!-- Pagination -->
     <div th:if="${problems.totalPages > 1}" class="mt-8 flex items-center justify-between">
-        <div class="text-sm" style="color: var(--muted)">
+        <div class="text-sm" style="color: var(--text-muted)">
             Showing <span th:text="${problems.number * problems.size + 1}">1</span> to 
             <span th:text="${problems.number * problems.size + problems.numberOfElements}">10</span> of 
             <span th:text="${problems.totalElements}">100</span> problems
@@ -109,15 +111,92 @@
         <div class="flex space-x-2">
             <a th:unless="${problems.first}" 
                th:href="@{/problems(page=${problems.number - 1}, topic=${selectedTopic}, difficulty=${selectedDifficulty})}"
-               class="px-4 py-2 rounded-md text-sm transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">Previous</a>
-            <span class="px-4 py-2 text-sm" style="color: var(--muted)">
+               class="px-4 py-2 rounded-md text-sm transition border border-gray-200 bg-white hover:bg-gray-50 shadow-sm" style="color: var(--text-main)">Previous</a>
+            <span class="px-4 py-2 text-sm" style="color: var(--text-muted)">
                 Page <span th:text="${problems.number + 1}">1</span> of <span th:text="${problems.totalPages}">10</span>
             </span>
             <a th:unless="${problems.last}" 
                th:href="@{/problems(page=${problems.number + 1}, topic=${selectedTopic}, difficulty=${selectedDifficulty})}"
-               class="px-4 py-2 rounded-md text-sm transition ring-1 ring-white/10 hover:bg-white/5" style="color: var(--text)">Next</a>
+               class="px-4 py-2 rounded-md text-sm transition border border-gray-200 bg-white hover:bg-gray-50 shadow-sm" style="color: var(--text-main)">Next</a>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        (function() {
+            function normalizeMathDelimiters(text) {
+                return text
+                    .replace(/\\\[/g, '$$')
+                    .replace(/\\\]/g, '$$')
+                    .replace(/\\\(/g, '$')
+                    .replace(/\\\)/g, '$');
+            }
+
+            function protectMath(text) {
+                const math = [];
+                let i = 0;
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
+                    math.push(`$$${m}$$`);
+                    return `@@MATH${i++}@@`;
+                });
+                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
+                    math.push(`$${m}$`);
+                    return `@@MATH${i++}@@`;
+                });
+                return { text, math };
+            }
+
+            function restoreMath(html, math) {
+                return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
+            }
+
+            function renderAll() {
+                const els = document.querySelectorAll('.markdown-content');
+                els.forEach(el => {
+                    const raw = el.getAttribute('data-raw');
+                    if (raw && raw.trim().length > 0) {
+                        try {
+                            if (window.marked && window.marked.parse) {
+                                const normalized = normalizeMathDelimiters(raw);
+                                const { text, math } = protectMath(normalized);
+                                let html = marked.parse(text);
+                                html = restoreMath(html, math);
+                                el.innerHTML = html;
+                            } else {
+                                el.innerHTML = raw;
+                            }
+                        } catch (err) {
+                            console.error('Render error:', err);
+                            el.innerHTML = raw;
+                        }
+                    }
+                });
+                
+                if (window.MathJax?.typesetPromise) {
+                    window.MathJax.typesetPromise().catch(err => console.error('MathJax error:', err));
+                } else if (window.typesetMath) {
+                    window.typesetMath();
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderAll);
+            } else {
+                renderAll();
+            }
+
+            // Retry typeset
+            let left = 10;
+            const id = setInterval(() => {
+                left -= 1;
+                if (window.MathJax?.typesetPromise) {
+                    if (window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                    clearInterval(id);
+                } else if (left <= 0) {
+                    clearInterval(id);
+                }
+            }, 500);
+        })();
+    </script>
 </div>
 </body>
 </html>
