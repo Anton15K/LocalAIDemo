@@ -3,13 +3,16 @@ package com.Anton15K.LocalAIDemo.service
 import com.Anton15K.LocalAIDemo.repository.ProblemRepository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.commons.csv.CSVFormat
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.ResourceLoader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import kotlin.math.roundToInt
+import java.io.InputStreamReader
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -18,7 +21,12 @@ class DeepMathIngestionJobService(
     private val objectMapper: ObjectMapper,
     private val mathDatasetIngestionService: MathDatasetIngestionService,
     private val problemRepository: ProblemRepository,
+    private val resourceLoader: ResourceLoader,
     restClientBuilder: RestClient.Builder,
+    @Value("\${app.ingestion.deepmath.source:huggingface}")
+    private val defaultSource: String,
+    @Value("\${app.ingestion.deepmath.local-csv:classpath:db/migration/csv/deepmath_dataset.csv}")
+    private val defaultLocalCsv: String,
     @Value("\${app.ingestion.deepmath.dataset:zwhe99/DeepMath-103K}")
     private val defaultDataset: String,
     @Value("\${app.ingestion.deepmath.config:default}")
@@ -182,12 +190,69 @@ class DeepMathIngestionJobService(
         indexChunkSize: Int,
         indexDelayMs: Long
     ) {
+        val source = parseSource(defaultSource)
+        when (source) {
+            DatasetSource.HUGGINGFACE -> ingestFromHuggingFace(
+                dataset = dataset,
+                config = config,
+                split = split,
+                batchSize = batchSize,
+                maxRows = maxRows,
+                requestDelayMs = requestDelayMs,
+                indexEmbeddings = indexEmbeddings,
+                indexChunkSize = indexChunkSize,
+                indexDelayMs = indexDelayMs
+            )
+
+            DatasetSource.LOCAL -> ingestFromLocalCsv(
+                csvLocation = defaultLocalCsv,
+                dataset = dataset,
+                split = split,
+                batchSize = batchSize,
+                maxRows = maxRows,
+                requestDelayMs = requestDelayMs,
+                indexEmbeddings = indexEmbeddings,
+                indexChunkSize = indexChunkSize,
+                indexDelayMs = indexDelayMs
+            )
+        }
+    }
+
+    private enum class DatasetSource {
+        HUGGINGFACE,
+        LOCAL
+    }
+
+    private fun parseSource(raw: String?): DatasetSource {
+        val normalized = raw?.trim()?.lowercase().orEmpty()
+        return when (normalized) {
+            "local", "csv" -> DatasetSource.LOCAL
+            "huggingface", "hf", "remote" -> DatasetSource.HUGGINGFACE
+            "" -> DatasetSource.HUGGINGFACE
+            else -> {
+                logger.warn("DeepMath ingestion: unknown app.ingestion.deepmath.source='$raw'; defaulting to huggingface")
+                DatasetSource.HUGGINGFACE
+            }
+        }
+    }
+
+    private fun ingestFromHuggingFace(
+        dataset: String,
+        config: String,
+        split: String,
+        batchSize: Int,
+        maxRows: Int,
+        requestDelayMs: Long,
+        indexEmbeddings: Boolean,
+        indexChunkSize: Int,
+        indexDelayMs: Long
+    ) {
         val prefix = "hf:$dataset:$split:"
         val existing = problemRepository.countBySourceIdStartingWith(prefix)
         if (existing > 0) {
-            logger.info("DeepMath ingestion: found $existing existing rows (prefix=$prefix). Will continue ingesting and rely on source_id de-duplication.")
+            logger.info("DeepMath ingestion (huggingface): found $existing existing rows (prefix=$prefix). Will continue ingesting and rely on source_id de-duplication.")
         } else {
-            logger.info("DeepMath ingestion: starting fresh (dataset=$dataset, config=$config, split=$split)")
+            logger.info("DeepMath ingestion (huggingface): starting fresh (dataset=$dataset, config=$config, split=$split)")
         }
 
         val totalRows = fetchTotalRows(dataset, config, split)
@@ -199,7 +264,7 @@ class DeepMathIngestionJobService(
         status = status.copy(totalRows = totalRows, effectiveTotal = effectiveTotal, lastUpdatedAt = Instant.now())
 
         logger.info(
-            "DeepMath ingestion: totalRows=$totalRows, ingesting=$effectiveTotal, batchSize=$batchSize, " +
+            "DeepMath ingestion (huggingface): totalRows=$totalRows, ingesting=$effectiveTotal, batchSize=$batchSize, " +
                 "indexEmbeddings=$indexEmbeddings, requestDelayMs=$requestDelayMs, indexChunkSize=$indexChunkSize, indexDelayMs=$indexDelayMs"
         )
 
@@ -235,7 +300,7 @@ class DeepMathIngestionJobService(
             )
 
             if (offset % (batchSize * 10) == 0 || offset >= effectiveTotal) {
-                logger.info("DeepMath ingestion progress: $offset/$effectiveTotal rows processed (imported=$totalImported, skipped=$totalSkipped, failed=$totalFailed)")
+                logger.info("DeepMath ingestion progress (huggingface): $offset/$effectiveTotal rows processed (imported=$totalImported, skipped=$totalSkipped, failed=$totalFailed)")
             }
 
             if (requestDelayMs > 0) {
@@ -243,7 +308,169 @@ class DeepMathIngestionJobService(
             }
         }
 
-        logger.info("DeepMath ingestion complete: imported=$totalImported, skipped=$totalSkipped, failed=$totalFailed")
+        logger.info("DeepMath ingestion complete (huggingface): imported=$totalImported, skipped=$totalSkipped, failed=$totalFailed")
+    }
+
+    private fun ingestFromLocalCsv(
+        csvLocation: String,
+        dataset: String,
+        split: String,
+        batchSize: Int,
+        maxRows: Int,
+        requestDelayMs: Long,
+        indexEmbeddings: Boolean,
+        indexChunkSize: Int,
+        indexDelayMs: Long
+    ) {
+        val prefix = "hf:$dataset:$split:"
+        val existing = problemRepository.countBySourceIdStartingWith(prefix)
+        if (existing > 0) {
+            logger.info("DeepMath ingestion (local): found $existing existing rows (prefix=$prefix). Will continue ingesting and rely on source_id de-duplication.")
+        } else {
+            logger.info("DeepMath ingestion (local): starting fresh (csv=$csvLocation, split=$split)")
+        }
+
+        val effectiveTotal: Int? = maxRows.takeIf { it > 0 }
+        status = status.copy(totalRows = null, effectiveTotal = effectiveTotal, lastUpdatedAt = Instant.now())
+
+        logger.info(
+            "DeepMath ingestion (local): ingesting=${effectiveTotal ?: "all"}, batchSize=$batchSize, " +
+                "indexEmbeddings=$indexEmbeddings, requestDelayMs=$requestDelayMs, indexChunkSize=$indexChunkSize, indexDelayMs=$indexDelayMs"
+        )
+
+        val resource = resourceLoader.getResource(csvLocation)
+        require(resource.exists()) {
+            "DeepMath ingestion (local): CSV resource does not exist: $csvLocation"
+        }
+
+        var processed = 0
+        var totalImported = 0
+        var totalSkipped = 0
+        var totalFailed = 0
+
+        resource.inputStream.use { inputStream ->
+            InputStreamReader(inputStream, Charsets.UTF_8).use { reader ->
+                val format = CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .setIgnoreSurroundingSpaces(true)
+                    .build()
+
+                val parser = format.parse(reader)
+
+                val buffer = ArrayList<MathProblemImport>(batchSize)
+
+                for (record in parser) {
+                    if (maxRows > 0 && processed >= maxRows) break
+
+                    val rowIdx = (record.recordNumber - 1).toInt().coerceAtLeast(0)
+
+                    val question = record.getOrNull("question")?.takeIf { it.isNotBlank() }
+                        ?: continue
+                    val finalAnswer = record.getOrNull("final_answer")
+                    val topicPath = record.getOrNull("topic")
+
+                    val r1 = record.getOrNull("r1_solution_1")
+                    val r2 = record.getOrNull("r1_solution_2")
+                    val r3 = record.getOrNull("r1_solution_3")
+
+                    val difficultyInt = record.getOrNull("difficulty")
+                        ?.trim()
+                        ?.takeIf { it.isNotBlank() }
+                        ?.toDoubleOrNull()
+                        ?.roundToInt()
+
+                    val (topic, subtopic) = splitTopic(topicPath)
+
+                    val solution = buildString {
+                        finalAnswer?.trim()?.takeIf { it.isNotBlank() }?.let { append("Final answer: ").append(it) }
+
+                        fun appendRationale(label: String, text: String?) {
+                            val cleaned = text?.trim()?.takeIf { it.isNotBlank() } ?: return
+                            if (isNotEmpty()) append("\n\n")
+                            append(label).append(":\n").append(cleaned)
+                        }
+
+                        appendRationale("Rationale 1", r1)
+                        appendRationale("Rationale 2", r2)
+                        appendRationale("Rationale 3", r3)
+                    }.takeIf { it.isNotBlank() }
+
+                    buffer += MathProblemImport(
+                        sourceId = "hf:$dataset:$split:$rowIdx",
+                        statement = question,
+                        solution = solution,
+                        topic = topic,
+                        subtopic = subtopic,
+                        difficulty = difficultyInt
+                    )
+
+                    processed++
+
+                    if (buffer.size >= batchSize) {
+                        val result = mathDatasetIngestionService.importProblems(
+                            buffer,
+                            indexAfterSave = indexEmbeddings,
+                            indexChunkSize = indexChunkSize,
+                            indexDelayMs = indexDelayMs
+                        )
+
+                        totalImported += result.imported
+                        totalSkipped += result.skipped
+                        totalFailed += result.failed
+                        buffer.clear()
+
+                        status = status.copy(
+                            processedRows = processed,
+                            imported = totalImported,
+                            skipped = totalSkipped,
+                            failed = totalFailed,
+                            lastUpdatedAt = Instant.now()
+                        )
+
+                        if (processed % (batchSize * 10) == 0) {
+                            logger.info("DeepMath ingestion progress (local): processed=$processed imported=$totalImported skipped=$totalSkipped failed=$totalFailed")
+                        }
+
+                        if (requestDelayMs > 0) {
+                            Thread.sleep(requestDelayMs)
+                        }
+                    }
+                }
+
+                if (buffer.isNotEmpty()) {
+                    val result = mathDatasetIngestionService.importProblems(
+                        buffer,
+                        indexAfterSave = indexEmbeddings,
+                        indexChunkSize = indexChunkSize,
+                        indexDelayMs = indexDelayMs
+                    )
+
+                    totalImported += result.imported
+                    totalSkipped += result.skipped
+                    totalFailed += result.failed
+                    buffer.clear()
+                }
+            }
+        }
+
+        status = status.copy(
+            processedRows = processed,
+            imported = totalImported,
+            skipped = totalSkipped,
+            failed = totalFailed,
+            lastUpdatedAt = Instant.now()
+        )
+
+        logger.info("DeepMath ingestion complete (local): processed=$processed imported=$totalImported skipped=$totalSkipped failed=$totalFailed")
+    }
+
+    private fun org.apache.commons.csv.CSVRecord.getOrNull(header: String): String? {
+        return try {
+            if (isMapped(header)) get(header) else null
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun fetchTotalRows(dataset: String, config: String, split: String): Int {
