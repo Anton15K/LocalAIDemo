@@ -3,6 +3,7 @@
 ## Demo
 
 <video src="docs/demo/demo_EruditAI.mp4" controls playsinline muted style="max-width: 100%;"></video>
+[LANDING](https://anton15k.github.io/LocalAIDemo/)
 
 [docs/demo/demo_EruditAI.mp4](docs/demo/demo_EruditAI.mp4)
 
