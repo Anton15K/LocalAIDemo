@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
+import org.springframework.web.server.ResponseStatusException
+import org.springframework.http.HttpStatus
 import java.util.UUID
 
 @Controller
@@ -156,7 +158,7 @@ class WebController(
     @GetMapping("/lectures/{id}")
     fun lectureDetail(@PathVariable id: UUID, model: Model): String {
         val lecture = lectureRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Lecture not found with id: $id") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Lecture not found with id: $id") }
 
         // If lecture is not analyzed yet, show processing view
         val status = lecture.status.toString()
@@ -191,7 +193,7 @@ class WebController(
         model: Model
     ): String {
         val lecture = lectureRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Lecture not found with id: $id") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Lecture not found with id: $id") }
 
         val problems = lectureProcessingService.getRecommendedProblems(
             lectureId = id,
@@ -303,7 +305,7 @@ class WebController(
                 // Fallback: allow opening a problem by sourceId-like slug.
                 problemRepository.findBySourceId(id)
             }
-        } ?: throw NoSuchElementException("Problem not found with id: $id")
+        } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found with id: $id")
 
         // Best-effort indexing to reduce future retrieval misses.
         try {

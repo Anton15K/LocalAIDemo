@@ -56,13 +56,11 @@
                         <span x-text="open ? 'hide full text' : 'show full text'">show full text</span>
                     </button>
                 </div>
-                <!-- Hidden raw content to avoid attribute encoding issues -->
-                <div id="structured-content-raw" style="display: none" th:if="${lecture.structuredContent}" th:text="${lecture.structuredContent}"></div>
-                
                 <div class="relative">
                     <div class="p-6 prose max-w-none transition-all duration-300" 
                          id="structured-content" 
                          style="color: var(--text-main)"
+                         th:attr="data-raw=${lecture.structuredContent}"
                          :class="open ? 'max-h-none' : 'max-h-[300px] overflow-hidden'">
                         <p class="text-sm italic" style="color: var(--text-muted)">Loading structured notes...</p>
                     </div>
@@ -166,7 +164,11 @@
                     <div th:each="result : ${problems.content}" class="p-4 transition hover:bg-black/5">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <p class="text-sm line-clamp-3" style="color: var(--text-main)" th:text="${result.problem.statement}">Problem statement...</p>
+                                <div class="text-sm line-clamp-3 markdown-content" 
+                                     style="color: var(--text-main)" 
+                                     th:attr="data-raw=${result.problem.statement}">
+                                    Loading problem...
+                                </div>
                                 <div class="mt-2 flex items-center space-x-2">
                                     <span class="px-2 py-0.5 rounded text-xs" style="background: #F5F3FF; color: var(--accent-violet); border: 1px solid #DDD6FE"
                                           th:text="${result.problem.topic}">Topic</span>
@@ -213,98 +215,95 @@
             </div>
         </div>
     </div>
-    <script th:inline="javascript">
+    <script th:inline="none">
         (function() {
+            function normalizeMathDelimiters(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\\\[/g, '$$$$')
+                    .replace(/\\\]/g, '$$$$')
+                    .replace(/\\\(/g, '$$')
+                    .replace(/\\\)/g, '$$');
+            }
+
+            function protectMath(text) {
+                const math = [];
+                let i = 0;
+                // 1. Protect display math $$...$$
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match) => {
+                    math.push(match);
+                    return `@@MATH${i++}@@`;
+                });
+                // 2. Protect inline math $...$
+                text = text.replace(/(^|[^\\])\$([^\s$][^$\n]*?[^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
+                });
+                // Special case for single character math like $x$
+                text = text.replace(/(^|[^\\])\$([^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
+                });
+                return { text, math };
+            }
+
+            function restoreMath(html, math) {
+                return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
+            }
+
             function renderNotes() {
                 console.log('Structured content render function triggered');
+                
+                // Render structured notes
                 const contentEl = document.getElementById('structured-content');
-                const rawEl = document.getElementById('structured-content-raw');
-                
-                if (!contentEl) {
-                    console.error('structured-content element not found');
-                    return;
+                if (contentEl) {
+                    const content = contentEl.getAttribute('data-raw');
+                    if (content && content.trim().length > 0) {
+                        try {
+                            if (window.marked && window.marked.parse) {
+                                const normalized = normalizeMathDelimiters(content);
+                                const { text, math } = protectMath(normalized);
+                                let html = marked.parse(text);
+                                html = restoreMath(html, math);
+                                contentEl.innerHTML = html;
+                            } else {
+                                contentEl.innerHTML = '<pre style="white-space: pre-wrap">' + content + '</pre>';
+                            }
+                        } catch (err) {
+                            console.error('Error rendering notes:', err);
+                        }
+                    }
                 }
 
-                if (!rawEl) {
-                    console.warn('structured-content-raw element not found');
-                    if (contentEl.innerHTML.includes('Loading structured notes...')) {
-                        contentEl.innerHTML = '<p class="text-sm italic" style="color: var(--muted)">No structured notes available for this lecture.</p>';
+                // Render any other markdown content (like sidebar problems)
+                const otherEls = document.querySelectorAll('.markdown-content');
+                otherEls.forEach(el => {
+                    if (el.id === 'structured-content') return;
+                    const raw = el.getAttribute('data-raw');
+                    if (raw && raw.trim().length > 0) {
+                        try {
+                            if (window.marked && window.marked.parse) {
+                                const normalized = normalizeMathDelimiters(raw);
+                                const { text, math } = protectMath(normalized);
+                                let html = marked.parse(text);
+                                html = restoreMath(html, math);
+                                el.innerHTML = html;
+                            } else {
+                                el.innerHTML = raw;
+                            }
+                        } catch (err) {
+                            console.error('Error rendering sidebar element:', err);
+                        }
                     }
-                    return;
-                }
-
-                const content = rawEl.textContent;
-                console.log('Raw content length:', content ? content.length : 0);
+                });
                 
-                if (content && content.trim().length > 0) {
-                    try {
-                        // Parse Markdown using marked.js
-                        if (window.marked && window.marked.parse) {
-                            function normalizeMathDelimiters(text) {
-                                return text
-                                    // Display math
-                                    .replace(/\\\[/g, '$$')
-                                    .replace( /\\\]/g, '$$')
-                                    // Inline math
-                                    .replace(/\\\(/g, '$')
-                                    .replace(/\\\)/g, '$');
-                            }
-
-                            function protectMath(text) {
-                                const math = [];
-                                let i = 0;
-
-                                // Protect display math $$...$$
-                                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
-                                    math.push(`$$${m}$$`);
-                                    return `@@MATH${i++}@@`;
-                                });
-
-                                // Protect inline math $...$
-                                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
-                                    math.push(`$${m}$`);
-                                    return `@@MATH${i++}@@`;
-                                });
-
-                                return { text, math };
-                            }
-
-                            function restoreMath(html, math) {
-                                return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
-                            }
-
-                            // ---- pipeline ----
-                            const normalized = normalizeMathDelimiters(content);
-                            const { text, math } = protectMath(normalized);
-
-                            let html = marked.parse(text);
-                            html = restoreMath(html, math);
-
-                            contentEl.innerHTML = html;
-
-
-                            console.log('Markdown parsed successfully');
-                        } else {
-                            console.warn('marked.js not found, falling back to plain text');
-                            contentEl.innerHTML = '<pre style="white-space: pre-wrap">' + content + '</pre>';
-                        }
-                        
-                        // Trigger MathJax typeset
-                        if (window.MathJax && window.MathJax.typesetPromise) {
-                            window.MathJax.typesetPromise([contentEl]).then(() => {
-                                console.log('MathJax typeset complete');
-                            }).catch((err) => console.error('MathJax typeset failed:', err));
-                        } else if (window.typesetMath) {
-                            window.typesetMath();
-                        }
-                    } catch (err) {
-                        console.error('Error rendering notes:', err);
-                        contentEl.innerHTML = '<p class="text-red-400">Error rendering notes. Displaying raw content:</p>' + 
-                                             '<pre style="white-space: pre-wrap; color: var(--text)">' + content + '</pre>';
-                    }
-                } else {
-                    console.warn('Content is empty');
-                    contentEl.innerHTML = '<p class="text-sm italic" style="color: var(--muted)">Structured notes content is empty.</p>';
+                // Trigger MathJax typeset
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise().then(() => {
+                        console.log('MathJax typeset complete');
+                    }).catch((err) => console.error('MathJax typeset failed:', err));
+                } else if (window.typesetMath) {
+                    window.typesetMath();
                 }
             }
 
@@ -313,6 +312,30 @@
             } else {
                 renderNotes();
             }
+
+            // Retry mechanism for late script loads
+            let left = 20;
+            const id = setInterval(() => {
+                left -= 1;
+                const contentEl = document.getElementById('structured-content');
+                const isStillLoading = contentEl && contentEl.innerHTML.includes('Loading structured notes...');
+                
+                if (window.marked && window.marked.parse && isStillLoading) {
+                    console.log('marked.js loaded late, rendering now...');
+                    renderNotes();
+                }
+
+                if (window.MathJax?.typesetPromise) {
+                    if (!isStillLoading) {
+                        window.MathJax.typesetPromise([contentEl]);
+                        clearInterval(id);
+                    }
+                }
+                
+                if (left <= 0) {
+                    clearInterval(id);
+                }
+            }, 500);
         })();
     </script>
 </div>

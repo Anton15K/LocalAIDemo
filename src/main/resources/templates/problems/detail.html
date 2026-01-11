@@ -43,10 +43,11 @@
         <div class="p-6" style="border-bottom: 1px solid var(--border)">
             <h2 class="text-lg font-semibold mb-4" style="color: var(--text-main)">Problem Statement</h2>
             <div class="prose max-w-none">
-                <!-- Hidden raw content -->
-                <div id="problem-statement-raw" style="display: none" th:text="${problem.statement}"></div>
-                <!-- Rendered target -->
-                <div id="problem-statement" class="whitespace-pre-wrap" style="color: var(--text-main)">
+                <!-- Rendered target with raw content in data attribute -->
+                <div id="problem-statement" 
+                     class="markdown-content" 
+                     style="color: var(--text-main)"
+                     th:attr="data-raw=${problem.statement}">
                     <p class="text-sm italic" style="color: var(--text-muted)">Loading statement...</p>
                 </div>
             </div>
@@ -67,20 +68,17 @@
             <div x-show="showSolution" x-transition class="mt-4">
                 <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
                     <div th:if="${problem.solution}" class="prose max-w-none">
-                        <!-- Hidden raw content -->
-                        <div id="problem-solution-raw" style="display: none" th:text="${problem.solution}"></div>
-                        <!-- Rendered target -->
-                        <div id="problem-solution" class="whitespace-pre-wrap" style="color: var(--text-main)">
+                        <!-- Rendered target with raw content in data attribute -->
+                        <div id="problem-solution" 
+                             class="markdown-content" 
+                             style="color: var(--text-main)"
+                             th:attr="data-raw=${problem.solution}">
                             <p class="text-sm italic" style="color: var(--text-muted)">Loading solution...</p>
                         </div>
                     </div>
                     <p th:unless="${problem.solution}" class="italic" style="color: var(--text-muted)">
                         No solution available for this problem.
                     </p>
-                </div>
-                <div th:if="${problem.answer}" class="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-100">
-                    <span class="text-sm font-medium" style="color: var(--text-main)">Answer: </span>
-                    <span class="font-mono" style="color: var(--accent-blue)" th:text="${problem.answer}">42</span>
                 </div>
             </div>
         </div>
@@ -107,28 +105,35 @@
     </div>
 
     <!-- Ensure MathJax typesets even if the page loads before MathJax finishes initializing -->
-    <script th:inline="javascript">
+    <script th:inline="none">
         (function () {
             function normalizeMathDelimiters(text) {
+                if (!text) return '';
                 return text
-                    .replace(/\\\[/g, '$$')
-                    .replace(/\\\]/g, '$$')
-                    .replace(/\\\(/g, '$')
-                    .replace(/\\\)/g, '$');
+                    .replace(/\\\[/g, '$$$$')
+                    .replace(/\\\]/g, '$$$$')
+                    .replace(/\\\(/g, '$$')
+                    .replace(/\\\)/g, '$$');
             }
 
             function protectMath(text) {
                 const math = [];
                 let i = 0;
-                // Protect display math $$...$$
-                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
-                    math.push(`$$${m}$$`);
+                // 1. Protect display math $$...$$
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match) => {
+                    math.push(match);
                     return `@@MATH${i++}@@`;
                 });
-                // Protect inline math $...$
-                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
-                    math.push(`$${m}$`);
-                    return `@@MATH${i++}@@`;
+                // 2. Protect inline math $...$
+                // Improved regex to handle escaped \$ and ensure we don't match across lines for inline
+                text = text.replace(/(^|[^\\])\$([^\s$][^$\n]*?[^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
+                });
+                // Special case for single character math like $x$
+                text = text.replace(/(^|[^\\])\$([^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
                 });
                 return { text, math };
             }
@@ -137,48 +142,49 @@
                 return html.replace(/@@MATH(\d+)@@/g, (_, i) => math[i]);
             }
 
-            function renderMarkdown(rawId, targetId) {
-                const rawEl = document.getElementById(rawId);
+            function renderElement(targetId) {
                 const targetEl = document.getElementById(targetId);
-                if (!rawEl || !targetEl) return;
+                if (!targetEl) return;
 
-                const content = rawEl.textContent;
-                if (content && content.trim().length > 0) {
+                const raw = targetEl.getAttribute('data-raw');
+                if (raw && raw.trim().length > 0) {
                     try {
                         if (window.marked && window.marked.parse) {
-                            const normalized = normalizeMathDelimiters(content);
+                            const normalized = normalizeMathDelimiters(raw);
                             const { text, math } = protectMath(normalized);
                             let html = marked.parse(text);
                             html = restoreMath(html, math);
                             targetEl.innerHTML = html;
                         } else {
-                            targetEl.innerHTML = content;
+                            targetEl.innerHTML = '<pre style="white-space: pre-wrap">' + raw + '</pre>';
                         }
                     } catch (err) {
-                        console.error('Error rendering markdown:', err);
-                        targetEl.textContent = content;
+                        console.error('Error rendering element ' + targetId + ':', err);
+                        targetEl.innerHTML = raw;
                     }
-                } else {
-                    targetEl.innerHTML = '';
                 }
             }
 
-            function typeset() {
+            function typeset(element) {
                 if (window.MathJax?.typesetPromise) {
-                    window.MathJax.typesetPromise().catch((err) => console.error('MathJax typeset failed:', err));
+                    const promise = element ? window.MathJax.typesetPromise([element]) : window.MathJax.typesetPromise();
+                    promise.catch((err) => console.error('MathJax typeset failed:', err));
                 } else if (window.typesetMath) {
                     window.typesetMath();
                 }
             }
 
             window.renderProblemSolution = function() {
-                renderMarkdown('problem-solution-raw', 'problem-solution');
-                typeset();
+                renderElement('problem-solution');
+                const el = document.getElementById('problem-solution');
+                if (el) typeset(el);
             };
 
             function init() {
-                renderMarkdown('problem-statement-raw', 'problem-statement');
-                typeset();
+                console.log('Initializing problem detail rendering...');
+                renderElement('problem-statement');
+                const el = document.getElementById('problem-statement');
+                if (el) typeset(el);
             }
 
             if (document.readyState === 'loading') {
@@ -187,14 +193,24 @@
                 init();
             }
 
-            // Retry typeset a few times in case MathJax loads late.
-            let left = 10;
+            // Retry rendering and typeset a few times in case scripts load late
+            let left = 20;
             const id = setInterval(() => {
                 left -= 1;
+                const statementEl = document.getElementById('problem-statement');
+                const isStillLoading = statementEl && statementEl.innerHTML.includes('Loading statement...');
+                
+                if (window.marked && window.marked.parse && isStillLoading) {
+                    console.log('marked.js loaded late, rendering now...');
+                    renderElement('problem-statement');
+                }
+
                 if (window.MathJax?.typesetPromise) {
                     typeset();
-                    clearInterval(id);
-                } else if (left <= 0) {
+                    if (!isStillLoading) clearInterval(id);
+                }
+                
+                if (left <= 0) {
                     clearInterval(id);
                 }
             }, 500);

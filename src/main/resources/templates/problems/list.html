@@ -121,26 +121,34 @@
         </div>
     </div>
 
-    <script th:inline="javascript">
+    <script th:inline="none">
         (function() {
             function normalizeMathDelimiters(text) {
+                if (!text) return '';
                 return text
-                    .replace(/\\\[/g, '$$')
-                    .replace(/\\\]/g, '$$')
-                    .replace(/\\\(/g, '$')
-                    .replace(/\\\)/g, '$');
+                    .replace(/\\\[/g, '$$$$')
+                    .replace(/\\\]/g, '$$$$')
+                    .replace(/\\\(/g, '$$')
+                    .replace(/\\\)/g, '$$');
             }
 
             function protectMath(text) {
                 const math = [];
                 let i = 0;
-                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
-                    math.push(`$$${m}$$`);
+                // 1. Protect display math $$...$$
+                text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match) => {
+                    math.push(match);
                     return `@@MATH${i++}@@`;
                 });
-                text = text.replace(/\$([^\$]+?)\$/g, (_, m) => {
-                    math.push(`$${m}$`);
-                    return `@@MATH${i++}@@`;
+                // 2. Protect inline math $...$
+                text = text.replace(/(^|[^\\])\$([^\s$][^$\n]*?[^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
+                });
+                // Special case for single character math like $x$
+                text = text.replace(/(^|[^\\])\$([^\s$])\$/g, (match, prefix, content) => {
+                    math.push(`$${content}$`);
+                    return `${prefix}@@MATH${i++}@@`;
                 });
                 return { text, math };
             }
@@ -162,7 +170,7 @@
                                 html = restoreMath(html, math);
                                 el.innerHTML = html;
                             } else {
-                                el.innerHTML = raw;
+                                el.innerHTML = '<pre style="white-space: pre-wrap">' + raw + '</pre>';
                             }
                         } catch (err) {
                             console.error('Render error:', err);
