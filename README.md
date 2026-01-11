@@ -1,5 +1,11 @@
 # Erudit AI (LocalAIDemo)
 
+## Demo
+
+<video src="docs/demo/demo_EruditAI.mp4" controls playsinline muted style="max-width: 100%;"></video>
+
+If the video doesn’t render in your Markdown viewer: [docs/demo/demo_EruditAI.mp4](docs/demo/demo_EruditAI.mp4)
+
 A Kotlin/Spring Boot application that turns lecture material (text or video) into **explainable themes** and recommends **relevant university-level math problems** using a hybrid retrieval pipeline (Postgres filters + pgvector semantic search).
 
 This repository includes:
