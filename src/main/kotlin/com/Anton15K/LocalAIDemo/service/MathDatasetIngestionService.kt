@@ -57,14 +57,12 @@ class MathDatasetIngestionService(
         )
 
         val saved = problemRepository.save(problem)
-        
         // Index for vector search (non-fatal)
         try {
             problemRetrievalService.indexProblem(saved)
         } catch (e: Exception) {
             logger.warn("Indexing failed for problem ${saved.sourceId}: ${e.message}")
         }
-        
         logger.debug("Imported problem: ${saved.sourceId}")
         return saved
     }
@@ -119,7 +117,7 @@ class MathDatasetIngestionService(
         // Batch save
         if (problems.isNotEmpty()) {
             val saved = problemRepository.saveAll(problems)
-            
+
             // Batch index for vector search (non-fatal)
             if (indexAfterSave) {
                 try {

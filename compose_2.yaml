@@ -86,6 +86,11 @@ services:
     container_name: eruditai-app
     ports:
       - "8080:8080"
+    # Note: `deepmath_dataset.csv` is excluded from the Docker build context (see `.dockerignore`)
+    # to avoid packaging a multi-GB file into the fat JAR.
+    # Instead, we mount it at runtime.
+    volumes:
+      - ./src/main/resources/db/migration/csv/deepmath_dataset.csv:/data/deepmath_dataset.csv:ro
     environment:
       # Database
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase # Internal container port
@@ -105,6 +110,11 @@ services:
 
       # Hugging Face DeepMath ingestion (runs on startup)
       APP_INGESTION_DEEPMATH_ENABLED: "true"
+      # Switch between Hugging Face and local CSV.
+      # Override at runtime: `DEEPMATH_SOURCE=huggingface docker compose -f compose_2.yaml up --build`
+      APP_INGESTION_DEEPMATH_SOURCE: ${DEEPMATH_SOURCE:-local}
+      # Used when source=local
+      APP_INGESTION_DEEPMATH_LOCAL_CSV: ${DEEPMATH_LOCAL_CSV:-file:/data/deepmath_dataset.csv}
       APP_INGESTION_DEEPMATH_INDEX_EMBEDDINGS: "true"
       APP_INGESTION_DEEPMATH_BATCH_SIZE: "100"
       APP_INGESTION_DEEPMATH_REQUEST_DELAY_MS: "250"

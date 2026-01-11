@@ -67,3 +67,11 @@ allOpen {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+tasks.withType<Jar> {
+	isZip64 = true
+}
+
+tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
+	isZip64 = true
+}
